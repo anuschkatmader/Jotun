@@ -331,11 +331,13 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
    MODALS — cookie banner + newsletter pop-up
    ========================================================================== */
 .overlay{
-  position:fixed;inset:0;background:rgba(20,16,67,.6);z-index:200;
+  position:fixed;inset:0;background:rgba(20,16,67,.6);z-index:9000;
   display:flex;align-items:center;justify-content:center;padding:24px;
-  visibility:hidden;opacity:0;transition:opacity .2s;
+  visibility:hidden;opacity:0;pointer-events:none;transition:opacity .2s;
 }
-.overlay.show{visibility:visible;opacity:1}
+.overlay.show{visibility:visible;opacity:1;pointer-events:auto}
+/* The cookie banner always sits above the newsletter pop-up. */
+#cookieModal{z-index:9100}
 .modal{
   background:#fff;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
   box-shadow:0 24px 60px rgba(20,16,67,.4);position:relative;
@@ -345,11 +347,15 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 .modal p{font-size:.94rem}
 .modal .logo{margin-bottom:1.3rem}
 .modal .logo img,.modal .logo svg{height:42px}
+/* z-index keeps the X above the pop-up's header image, which is a positioned
+   element later in the DOM and was painting over it. */
 .modal-close{
-  position:absolute;top:12px;right:12px;background:rgba(255,255,255,.9);border:0;padding:.45rem;
+  position:absolute;top:12px;right:12px;z-index:10;background:none;border:0;padding:.45rem;
   color:var(--blue);line-height:0;border-radius:50%;
 }
-.modal-close:hover{background:#fff}
+.modal-close:hover{background:var(--tint)}
+.modal-close.on-image{background:rgba(255,255,255,.92)}
+.modal-close.on-image:hover{background:#fff}
 .modal-close svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
 .cookie-actions{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.6rem}
 .cookie-actions .btn{flex:1 1 auto;min-width:150px}
@@ -872,6 +878,9 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 <!-- DEMO CMP BANNER. Hides itself automatically if the real OneTrust banner loads. -->
 <div class="overlay" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="ckTitle">
   <div class="modal">
+    <button class="modal-close" onclick="dismissCookie()" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
     <div class="np-rule"></div>
     <div class="pad">
       <span class="logo">
@@ -926,7 +935,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 <!-- ======================= NEWSLETTER POP-UP ======================= -->
 <div class="overlay" id="newsletterModal" role="dialog" aria-modal="true" aria-labelledby="nlTitle">
   <div class="modal">
-    <button class="modal-close" onclick="closeNewsletter()" aria-label="Close">
+    <button class="modal-close on-image" onclick="closeNewsletter()" aria-label="Close">
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
     <div class="np-shot">
@@ -1039,6 +1048,12 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     var d = document.getElementById('cookieDetails');
     d.classList.toggle('show');
     document.getElementById('ckManage').textContent = d.classList.contains('show') ? 'Hide settings' : 'Manage settings';
+  };
+  /* Close without making a choice. Nothing is recorded — the banner will come
+     back on the next visit, which is the correct behaviour for a demo. */
+  window.dismissCookie = function(){
+    cookieModal.classList.remove('show');
+    setTimeout(openNewsletter, 1600);
   };
   window.closeCookie = function(choice){
     cookieModal.classList.remove('show');
