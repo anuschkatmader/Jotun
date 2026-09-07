@@ -1060,8 +1060,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
   };
   window.closeNewsletter = function(){ nlModal.classList.remove('show'); };
 
-  nlModal.addEventListener('click', function(e){ if (e.target === nlModal) closeNewsletter(); });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && nlIsOpen()) closeNewsletter(); });
+  // Deliberately no backdrop-click or Escape handler — see note above.
 
   /* ==========================================================================
      ONETRUST EMBEDDED WEB FORM INSTALL
@@ -1112,18 +1111,24 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     setTimeout(closeNewsletter, 600);
   });
 
+  /* The pop-up closes ONLY via the X in the corner or a real form submit.
+     No backdrop click, no Escape — clicking around inside the form (dropdowns,
+     labels, the panel) must never dismiss it. */
+
   /* Fallback close-on-submit: some form versions don't fire the event, so also
-     watch for a click on the form's own submit control. */
+     watch for a click on the form's OWN submit control. Anything we injected
+     (the dropdown toggles and their panels) is explicitly excluded. */
   (function(){
     var c = document.getElementById('ot-container');
     if (!c) return;
     c.addEventListener('click', function(e){
-      if (e.target.closest('button, input[type="submit"], input[type="button"], [type="submit"]')){
-        setTimeout(function(){
-          showToast('Subscribed — your consent has been recorded');
-          closeNewsletter();
-        }, 900);
-      }
+      var el = e.target.closest('button, input[type="submit"], input[type="button"], [type="submit"]');
+      if (!el) return;
+      if (el.classList.contains('ot-dd-btn') || el.closest('.ot-dd')) return;  // our dropdown UI
+      setTimeout(function(){
+        showToast('Subscribed — your consent has been recorded');
+        closeNewsletter();
+      }, 900);
     });
   })();
 
@@ -1160,7 +1165,12 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     '__OT__ input[type=text],__OT__ input[type=email],__OT__ input[type=tel],__OT__ input[type=number],',
     '__OT__ select,__OT__ textarea{width:100% !important;padding:.8rem .9rem !important;border:1px solid var(--line) !important;',
     'border-radius:2px !important;background:#fff !important;color:var(--ink) !important;font-size:.95rem !important;margin:0 0 1.1rem !important}',
-    '__OT__ input:focus,__OT__ select:focus,__OT__ textarea:focus{outline:2px solid var(--focus);outline-offset:1px}',
+    /* Focus ring is drawn INSIDE the field. An outline with an offset gets
+       clipped by the modal's scroll box, which is what cut the ring off at
+       the left and right edges of the name / e-mail fields. */
+    '__OT__ input:focus,__OT__ select:focus,__OT__ textarea:focus{outline:none !important;',
+    'border-color:var(--blue) !important;box-shadow:inset 0 0 0 2px rgba(31,27,98,.22) !important}',
+    '__OT__ input[type=checkbox]:focus-visible,__OT__ input[type=radio]:focus-visible{outline:2px solid var(--focus) !important;box-shadow:none !important}',
     '__OT__ input[type=checkbox],__OT__ input[type=radio]{width:17px !important;height:17px !important;',
     'accent-color:var(--red) !important;margin:.15rem .55rem 0 0 !important;flex:none}',
     '__OT__ a{color:var(--blue) !important;text-decoration:underline !important}',
@@ -1173,22 +1183,44 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     'padding:.9rem 1.7rem !important;font-weight:600 !important;font-size:.95rem !important;cursor:pointer;margin-top:.4rem !important}',
     '__OT__ button:not(.ot-dd-btn):hover,__OT__ input[type=submit]:hover{background:var(--blue-mid) !important}',
 
-    /* 3. the dropdowns we build around the original inputs */
+    /* 3. the dropdowns we build around the original inputs.
+          The native <select> and the collapsible toggle are given the SAME
+          box and the SAME caret, so every field on the form reads alike. */
+    '__OT__ select{appearance:none !important;-webkit-appearance:none !important;padding-right:2.4rem !important;',
+    'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' fill=\'none\' stroke=\'%231F1B62\' stroke-width=\'2\'/%3E%3C/svg%3E") !important;',
+    'background-repeat:no-repeat !important;background-position:right .95rem center !important;background-size:12px 8px !important}',
+
     '__OT__ .ot-dd{margin:0 0 1.1rem !important;position:relative}',
-    '__OT__ .ot-dd-btn{display:flex !important;align-items:center;justify-content:space-between;width:100% !important;',
-    'padding:.8rem .9rem !important;border:1px solid var(--line) !important;border-radius:2px !important;background:#fff !important;',
-    'color:var(--ink) !important;font-size:.95rem !important;font-weight:400 !important;text-align:left;margin:0 !important;cursor:pointer}',
+    '__OT__ .ot-dd-btn{display:block !important;width:100% !important;padding:.8rem 2.4rem .8rem .9rem !important;',
+    'border:1px solid var(--line) !important;border-radius:2px !important;background:#fff !important;color:var(--ink) !important;',
+    'font-size:.95rem !important;font-weight:400 !important;line-height:1.6 !important;text-align:left !important;margin:0 !important;cursor:pointer;',
+    'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',
+    'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' fill=\'none\' stroke=\'%231F1B62\' stroke-width=\'2\'/%3E%3C/svg%3E") !important;',
+    'background-repeat:no-repeat !important;background-position:right .95rem center !important;background-size:12px 8px !important}',
+    '__OT__ .ot-dd-btn:focus-visible{outline:none !important;border-color:var(--blue) !important;box-shadow:inset 0 0 0 2px rgba(31,27,98,.22) !important}',
     '__OT__ .ot-dd-btn[aria-expanded="true"]{border-color:var(--blue) !important}',
-    '__OT__ .ot-dd-btn .ot-caret{border:solid var(--blue);border-width:0 2px 2px 0;padding:3px;transform:rotate(45deg);margin-left:.6rem;flex:none}',
-    '__OT__ .ot-dd-btn[aria-expanded="true"] .ot-caret{transform:rotate(-135deg)}',
+    '__OT__ .ot-caret{display:none !important}',
+
     '__OT__ .ot-dd-panel{display:none;position:absolute;z-index:5;left:0;right:0;top:calc(100% - 1px);',
-    'background:#fff !important;border:1px solid var(--blue) !important;padding:.6rem .9rem .3rem !important;max-height:230px;overflow:auto;',
-    'box-shadow:0 8px 20px rgba(20,16,67,.16) !important}',
+    'background:#fff !important;border:1px solid var(--blue) !important;padding:.85rem .95rem .25rem !important;',
+    'max-height:230px;overflow:auto;box-shadow:0 8px 20px rgba(20,16,67,.16) !important}',
     '__OT__ .ot-dd.open .ot-dd-panel{display:block}',
-    '__OT__ .ot-dd-panel label{display:flex !important;align-items:flex-start;font-weight:400 !important;',
-    'color:var(--ink) !important;font-size:.92rem !important;margin:0 0 .6rem !important;cursor:pointer}',
+    /* Deep reset inside the panel — OneTrust's own chip / button styling for
+       these option groups is stripped so the panel matches the rest of the form. */
+    '__OT__ .ot-dd-panel *{background:transparent !important;background-color:transparent !important;',
+    'background-image:none !important;border:0 !important;box-shadow:none !important;border-radius:0 !important;',
+    'color:var(--ink) !important;font-size:.92rem !important;font-weight:400 !important;line-height:1.5 !important;',
+    'padding:0 !important;margin:0 !important;width:auto !important;min-width:0 !important;min-height:0 !important;',
+    'text-align:left !important;text-transform:none !important;letter-spacing:normal !important}',
+    '__OT__ .ot-dd-panel label{display:flex !important;align-items:flex-start;margin:0 0 .7rem !important;cursor:pointer}',
+    '__OT__ .ot-dd-panel input[type=checkbox],__OT__ .ot-dd-panel input[type=radio]{width:17px !important;height:17px !important;',
+    'accent-color:var(--red) !important;margin:.14rem .55rem 0 0 !important;flex:none}',
+    '__OT__ .ot-dd-panel button{cursor:pointer}',
+    /* the group question is shown above the toggle, so hide the original inside */
+    '__OT__ .ot-dd-panel legend,__OT__ .ot-dd-panel .ot-group-question{display:none !important}',
     '__OT__ .ot-dd-hidden-label{display:none !important}',
-    '__OT__ .ot-field-label{display:block;font-size:.86rem;font-weight:600;color:var(--blue);margin:0 0 .4rem}'
+    '__OT__ .ot-field-label{display:block !important;font-size:.86rem !important;font-weight:600 !important;',
+    'color:var(--blue) !important;margin:0 0 .4rem !important;padding:0 !important}'
   ].join('\n');
 
   function injectTheme(root, token){
@@ -1214,19 +1246,20 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     while (a && !nodes.every(function(n){ return a.contains(n); })) a = a.parentElement;
     return a;
   }
-  /* The question text sitting in the group container, e.g. "Preferred industry". */
-  function groupQuestion(container, inputs){
-    var cand = container.querySelector('legend, .ot-field-label');
-    if (cand) return cand.textContent.replace(/\s+/g,' ').trim();
-    var kids = Array.prototype.slice.call(container.childNodes);
+  /* The element already holding the question text, e.g. "Newsletter frequency".
+     We reuse it rather than adding a second label next to it. */
+  function questionElement(container, inputs){
+    var legend = container.querySelector('legend');
+    if (legend && (legend.textContent || '').trim()) return legend;
+    var kids = container.children;
     for (var i = 0; i < kids.length; i++){
       var k = kids[i];
-      if (k.nodeType === 1 && inputs.some(function(n){ return k.contains(n); })) continue;
-      var t = (k.textContent || '').replace(/\s+/g,' ').trim();
-      if (t) return t;
+      if (inputs.some(function(n){ return k === n || k.contains(n); })) continue;
+      if ((k.textContent || '').replace(/\s+/g,' ').trim()) return k;
     }
-    return '';
+    return null;
   }
+
 
   /* ---- radio group -> native <select> ------------------------------------- */
   function radioGroupsToSelects(scope){
@@ -1240,7 +1273,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       if (list.length < 2) return;
       var container = commonAncestor(list);
       if (!container) return;
-      var question = groupQuestion(container, list);
+      var qEl = questionElement(container, list);
 
       var sel = document.createElement('select');
       sel.className = 'ot-select';
@@ -1274,13 +1307,14 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
         r.dispatchEvent(new Event('change', { bubbles: true }));
       });
 
-      if (question){
-        var lbl = document.createElement('span');
-        lbl.className = 'ot-field-label';
-        lbl.textContent = question;
-        container.appendChild(lbl);
+      if (qEl){
+        // OneTrust already prints the question — restyle it, don't repeat it
+        qEl.classList.add('ot-field-label');
+        if (qEl.nextSibling) container.insertBefore(sel, qEl.nextSibling);
+        else container.appendChild(sel);
+      } else {
+        container.appendChild(sel);
       }
-      container.appendChild(sel);
     });
   }
 
@@ -1301,7 +1335,9 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     groups.forEach(function(container){
       var boxes = Array.prototype.slice.call(container.querySelectorAll('input[type=checkbox]'));
       boxes.forEach(function(c){ c.dataset.otDone = '1'; });
-      var question = groupQuestion(container, boxes) || 'Select options';
+      var qEl = questionElement(container, boxes);
+      var question = qEl ? (qEl.textContent || '').replace(/\s+/g,' ').trim() : 'Select options';
+      if (qEl) qEl.classList.add('ot-group-question');   // hidden once inside the panel
 
       var wrap  = document.createElement('div'); wrap.className = 'ot-dd';
       var lbl   = document.createElement('span'); lbl.className = 'ot-field-label'; lbl.textContent = question;
@@ -1386,3 +1422,4 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 </script>
 </body>
 </html>
+
