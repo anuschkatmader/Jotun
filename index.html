@@ -51,8 +51,10 @@
      Leave them empty to run the demo with the built-in placeholder forms.
      ========================================================================== */
   window.OT_CONFIG = {
-    webformCpId:    "",   // Collection Point id for the newsletter web form
-                          // (remember: drop the leading "ot-" from the id OneTrust shows)
+    // Collection Point id for the "Newsletter Pop-Up" web form.
+    // Taken from the production button trigger id, with the leading "ot-" removed:
+    //   id="ot-b90a1a08-78df-4be5-ac3d-2721a404430d"  ->  b90a1a08-...
+    webformCpId:    "b90a1a08-78df-4be5-ac3d-2721a404430d",
     prefCenterCpId: ""    // Optional: Collection Point id for the account preference centre
   };
 
@@ -66,10 +68,9 @@
 <script type="text/javascript">function OptanonWrapper() { }</script>
 -->
 
-<!-- 2) ONETRUST EMBEDDED WEB FORM (UCPM) — uncomment and set data-id + worker.
+<!-- 2) ONETRUST EMBEDDED WEB FORM (UCPM) — Jotun "Newsletter Pop-Up" collection point, V10. -->
 <script src="https://privacyportaltrial.onetrust.com/consent-embedded-forms/consent-receipt-scripts/OtFormStub.js"
-        data-id="PASTE-FORM-DATA-ID-HERE" worker="https://consent-api.onetrust.com"></script>
--->
+        data-id="89af9315-196c-45ad-88ea-1b8ec3fe5a51" worker="https://consent-api.onetrust.com"></script>
 
 <style>
 /* ==========================================================================
@@ -366,15 +367,30 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 .np-shot img{width:100%;height:100%;object-fit:cover}
 .np-shot::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,67,.15),rgba(20,16,67,.55))}
 .np-rule{height:5px;background:var(--yellow)}
-#ot-container{margin-top:.4rem}
-/* Neutralise OneTrust's default framing so the form sits on the page cleanly. */
-#ot-container fieldset{border:0;padding:0;margin:0;background:transparent;box-shadow:none}
-#ot-container input[type=text],#ot-container input[type=email]{
-  width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:2px;font-family:inherit;font-size:.95rem;
+#ot-container{margin-top:1.4rem;min-height:60px}
+/* Neutralise OneTrust's own framing so the form sits on the page cleanly,
+   then re-style its fields to match the rest of the mockup. Generic element
+   selectors are used so they land without needing OneTrust's class names. */
+#ot-container form,#ot-container fieldset,#ot-container section{
+  border:0;padding:0;margin:0;background:transparent;box-shadow:none;
+}
+#ot-container label{
+  display:block;font-size:.86rem;font-weight:600;color:var(--blue);margin-bottom:.4rem;
+}
+#ot-container input[type=text],#ot-container input[type=email],
+#ot-container input[type=tel],#ot-container select,#ot-container textarea{
+  width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:2px;
+  font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;margin-bottom:1.1rem;
+}
+#ot-container input[type=checkbox],#ot-container input[type=radio]{
+  width:17px;height:17px;accent-color:var(--red);margin-right:.5rem;
 }
 #ot-container button,#ot-container input[type=submit]{
-  background:var(--blue);color:#fff;border:0;border-radius:2px;padding:.85rem 1.7rem;font-weight:600;cursor:pointer;
+  width:100%;background:var(--blue);color:#fff;border:0;border-radius:2px;
+  padding:.85rem 1.7rem;font-family:inherit;font-weight:600;font-size:.95rem;cursor:pointer;margin-top:.4rem;
 }
+#ot-container button:hover,#ot-container input[type=submit]:hover{background:var(--blue-mid)}
+#ot-container a{color:var(--blue);text-decoration:underline}
 .demo-note{
   font-size:.78rem;color:var(--muted);background:var(--tint);border-left:3px solid var(--yellow);
   padding:.55rem .75rem;margin-top:1.4rem;
@@ -951,28 +967,17 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       <p>Technical insight, product news and case studies from the industries you work in. Choose your sector and we'll tailor what you receive.</p>
 
       <!-- ==================================================================
-           ONETRUST EMBEDDED WEB FORM SLOT
-           When OT_CONFIG.webformCpId is set, OneTrust.webform.InstallCP renders
-           the real form into #ot-container and the demo form below is removed.
-           Install happens on pop-up OPEN so the container is visible and laid out.
+           ONETRUST EMBEDDED WEB FORM — "Newsletter Pop-Up" collection point.
+           Layout = INLINE, so the form renders into #ot-container below.
+           Installed via OneTrust.webform.InstallCP(CP_ID, {target:"#ot-container"})
+           WHEN THE POP-UP OPENS — the SDK will not render into a container that
+           is hidden or not laid out (the E.ON / Philips lesson).
+           CP_ID = the production button trigger id minus the "ot-" prefix.
            ================================================================== -->
       <div id="ot-container"></div>
-
-      <div id="nlDemoForm">
-        <div class="field"><label for="nlName">Name</label><input id="nlName" type="text" placeholder="Your full name"></div>
-        <div class="field"><label for="nlMail">E-mail</label><input id="nlMail" type="email" placeholder="you@company.com"></div>
-        <div class="field"><label for="nlInd">Industry</label>
-          <select id="nlInd">
-            <option>Choose your preferred industry</option>
-            <option>Shipping</option><option>Energy</option>
-            <option>Architecture and design</option><option>Infrastructure</option><option>Light industry</option>
-          </select>
-        </div>
-        <label class="consent-row"><input type="checkbox" id="nlConsent">
-          <span>I consent to my e-mail address being used in accordance with the <a href="#privacy">privacy policy</a>. I can withdraw this at any time in My Jotun.</span>
-        </label>
-        <button class="btn btn-primary" style="width:100%" onclick="submitNewsletter()">Subscribe</button>
-        <p class="demo-note">Demo placeholder — this block is replaced by the OneTrust embedded web form once the collection point ID is added to OT_CONFIG.</p>
+      <div id="otFallback" class="demo-note" style="display:none">
+        The consent form could not load. Check that the collection point is published
+        and that this domain is authorised in OneTrust.
       </div>
     </div>
   </div>
@@ -1075,14 +1080,6 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
   };
   window.closeNewsletter = function(){ nlModal.classList.remove('show'); };
 
-  window.submitNewsletter = function(){
-    if (!document.getElementById('nlConsent').checked){
-      showToast('Tick the consent box to subscribe'); return;
-    }
-    closeNewsletter();
-    showToast('Subscribed — your consent has been recorded');
-  };
-
   nlModal.addEventListener('click', function(e){ if (e.target === nlModal) closeNewsletter(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && nlIsOpen()) closeNewsletter(); });
 
@@ -1099,14 +1096,13 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 
   function startWebformInstall(){
     var cp = CFG.webformCpId;
-    if (!cp) return;                       // no ID yet → demo form stays
+    if (!cp) return;
     if (otPoller || otRendered()) return;
     var attempts = 0;
     otPoller = setInterval(function(){
       attempts++;
       if (otRendered()){
         clearInterval(otPoller); otPoller = null;
-        var demo = document.getElementById('nlDemoForm'); if (demo) demo.style.display = 'none';
         return;
       }
       if (nlIsOpen() && otReady()){
@@ -1119,19 +1115,37 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       }
       if (attempts > 60){
         clearInterval(otPoller); otPoller = null;
-        if (!otRendered()) console.warn('OneTrust web form did not render — check the collection point is published and this domain is authorised.');
+        if (!otRendered()){
+          console.warn('OneTrust web form did not render — check the collection point is published and this domain is authorised.');
+          var fb = document.getElementById('otFallback'); if (fb) fb.style.display = 'block';
+        }
       }
     }, 300);
   }
 
   window.addEventListener('OnetrustFormLoaded', function(e){
     console.log('OnetrustFormLoaded', e.detail);
-    var demo = document.getElementById('nlDemoForm'); if (demo) demo.style.display = 'none';
+    var fb = document.getElementById('otFallback'); if (fb) fb.style.display = 'none';
   });
   window.addEventListener('OneTrustWebFormSubmitted', function(){
     showToast('Subscribed — your consent has been recorded');
-    setTimeout(closeNewsletter, 500);
+    setTimeout(closeNewsletter, 600);
   });
+
+  /* Fallback close-on-submit: some form versions don't fire the event, so also
+     watch for a click on the form's own submit control. */
+  (function(){
+    var c = document.getElementById('ot-container');
+    if (!c) return;
+    c.addEventListener('click', function(e){
+      if (e.target.closest('button, input[type="submit"], input[type="button"], [type="submit"]')){
+        setTimeout(function(){
+          showToast('Subscribed — your consent has been recorded');
+          closeNewsletter();
+        }, 900);
+      }
+    });
+  })();
 
   /* Optional: hosted preference centre on the account page. */
   (function(){
