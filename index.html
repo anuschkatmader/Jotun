@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Jotun — protects property</title>
+
+<!-- ============================================================================
+     DEMO ENVIRONMENT — NOT AFFILIATED WITH JOTUN A/S.
+     Built for a OneTrust CMP / UCPM product demonstration only.
+     Single self-contained file. GitHub Pages ready: no build step, no folders,
+     no npm, plain HTML + CSS + vanilla JS, all state in-page.
+     ============================================================================
+
+     BRAND (taken from the official Jotun logo artwork)
+       Jotun blue   #1F1B62      Jotun yellow #ECB731
+       Jotun red    #CC2229      White        #FFFFFF
+
+     LOGO & IMAGERY
+       The real Jotun logo and photography are loaded from Jotun's own CDN
+       (www.jotun.com/globalassets-b2b/...). Every image has a graceful
+       fallback, and the logo falls back to a drawn SVG of the mark, so nothing
+       breaks in front of the customer if their CDN blocks hotlinking.
+       To go fully offline: download the assets into /assets and swap the src
+       attributes — every one is tagged with data-jotun-asset.
+
+     ------------------------------ ONETRUST WIRING ------------------------------
+     Everything OneTrust-related is driven by window.OT_CONFIG (just below).
+     Fill in the IDs from the Jotun trial tenant and the demo switches over
+     automatically — no other edits needed.
+
+       1) COOKIE BANNER (CMP)
+          Uncomment the otSDKStub script block below and set data-domain-script.
+          The built-in demo banner hides itself once the real banner is detected.
+
+       2) NEWSLETTER POP-UP (UCPM embedded web form)
+          Uncomment the OtFormStub script block below and set OT_CONFIG.webformCpId.
+          The form renders INLINE into <div id="ot-container"> inside the pop-up.
+          It is installed WHEN THE POP-UP OPENS (container visible & laid out) —
+          the SDK will not render into a hidden / opacity:0 container.
+
+       3) PREFERENCE CENTRE (account page)
+          Optional embed slot: <div id="ot-pref-center"> on the
+          "Communication preferences" tab. Set OT_CONFIG.prefCenterCpId.
+     ----------------------------------------------------------------------------- -->
+
+<script>
+  /* ==========================================================================
+     ONETRUST CONFIGURATION — replace the empty strings with the Jotun IDs.
+     Leave them empty to run the demo with the built-in placeholder forms.
+     ========================================================================== */
+  window.OT_CONFIG = {
+    webformCpId:    "",   // Collection Point id for the newsletter web form
+                          // (remember: drop the leading "ot-" from the id OneTrust shows)
+    prefCenterCpId: ""    // Optional: Collection Point id for the account preference centre
+  };
+
+  /* OtSdk queue stub — must sit BEFORE the OtFormStub script. */
+  window.OtSdk = window.OtSdk || function () { (OtSdk.q = OtSdk.q || []).push(arguments); };
+</script>
+
+<!-- 1) ONETRUST COOKIE CONSENT (CMP) — uncomment and set data-domain-script.
+<script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js" type="text/javascript"
+        charset="UTF-8" data-domain-script="PASTE-DOMAIN-SCRIPT-ID-HERE"></script>
+<script type="text/javascript">function OptanonWrapper() { }</script>
+-->
+
+<!-- 2) ONETRUST EMBEDDED WEB FORM (UCPM) — uncomment and set data-id + worker.
+<script src="https://privacyportaltrial.onetrust.com/consent-embedded-forms/consent-receipt-scripts/OtFormStub.js"
+        data-id="PASTE-FORM-DATA-ID-HERE" worker="https://consent-api.onetrust.com"></script>
+-->
+
+<style>
+/* ==========================================================================
+   Design tokens — Jotun brand
+   ========================================================================== */
+:root{
+  --blue:#1F1B62;         /* Jotun blue  */
+  --blue-deep:#141043;
+  --blue-mid:#3A3585;
+  --blue-soft:#6C68A8;
+  --yellow:#ECB731;       /* Jotun yellow */
+  --red:#CC2229;          /* Jotun red   */
+  --ink:#1A1A22;
+  --body:#4C4C5A;
+  --muted:#7B7B8C;
+  --line:#E2E2EA;
+  --line-soft:#EFEFF4;
+  --bg:#FFFFFF;
+  --tint:#F5F5F9;
+  --green:#1D7A4C;
+  --focus:#3A3585;
+  --max:1240px;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:var(--sans);color:var(--body);background:var(--bg);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+h1,h2,h3,h4{color:var(--blue);margin:0;line-height:1.15;font-weight:600;letter-spacing:-.015em}
+h1{font-size:clamp(2.2rem,5vw,3.9rem);letter-spacing:-.03em}
+h2{font-size:clamp(1.55rem,2.8vw,2.4rem);letter-spacing:-.022em}
+h3{font-size:1.15rem}
+p{margin:0 0 1rem}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 28px}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.85rem 1.7rem;border-radius:2px;border:1px solid transparent;
+  font-weight:600;font-size:.95rem;transition:background .15s,color .15s,border-color .15s;
+}
+.btn:hover{text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-mid)}
+.btn-ghost{background:transparent;color:var(--blue);border-color:var(--blue)}
+.btn-ghost:hover{background:var(--blue);color:#fff}
+.btn-yellow{background:var(--yellow);color:var(--blue)}
+.btn-yellow:hover{background:#F5C955}
+.btn-light{background:#fff;color:var(--blue)}
+.btn-light:hover{background:#EDEDF4}
+.btn-link{background:none;border:0;padding:0;color:var(--blue);font-weight:600;text-decoration:underline}
+.btn-sm{padding:.6rem 1.15rem;font-size:.88rem}
+
+/* ---------- Header ---------- */
+.topbar{background:var(--tint);border-bottom:1px solid var(--line-soft);font-size:.83rem}
+.topbar .wrap{display:flex;justify-content:flex-end;align-items:center;gap:1.6rem;height:38px}
+.topbar a{color:var(--muted)}
+header.site{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
+.hdr{display:flex;align-items:center;gap:2.4rem;height:82px}
+.logo{display:flex;align-items:center;flex:none}
+.logo:hover{text-decoration:none}
+.logo img,.logo svg{height:46px;width:auto}
+nav.main{display:flex;gap:1.9rem;margin-left:auto}
+nav.main a{color:var(--blue);font-weight:500;font-size:.95rem;padding:.4rem 0;border-bottom:2px solid transparent}
+nav.main a:hover{border-bottom-color:var(--red);text-decoration:none}
+.hdr-actions{display:flex;align-items:center;gap:1.1rem;padding-left:1.6rem;border-left:1px solid var(--line)}
+.icon-btn{
+  background:none;border:0;padding:.4rem;border-radius:2px;color:var(--blue);
+  display:inline-flex;align-items:center;gap:.5rem;font-size:.9rem;font-weight:500;
+}
+.icon-btn:hover{color:var(--red)}
+.icon-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.6}
+.avatar{
+  width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:700;
+}
+@media(max-width:1080px){nav.main{display:none}}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;min-height:min(76vh,640px);display:flex;align-items:flex-end;
+  background:var(--blue-deep);overflow:hidden}
+.hero .bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(85deg,rgba(20,16,67,.92) 0%,rgba(31,27,98,.7) 42%,rgba(31,27,98,.2) 100%)}
+.hero .wrap{position:relative;z-index:2;padding-top:5rem;padding-bottom:4rem}
+.hero h1{color:#fff;max-width:13ch}
+.hero .rule{width:76px;height:5px;background:var(--yellow);margin:1.6rem 0 1.4rem}
+.hero p{color:#DEDCEC;max-width:56ch;font-size:1.08rem}
+
+/* ---------- Stats ---------- */
+.stats{border-bottom:1px solid var(--line)}
+.stats .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;padding-top:3.2rem;padding-bottom:3.2rem}
+.stat b{display:block;font-size:clamp(2.1rem,4vw,3rem);color:var(--blue);font-weight:700;letter-spacing:-.035em;line-height:1}
+.stat span{display:block;margin-top:.55rem;font-size:.93rem;max-width:24ch}
+@media(max-width:720px){.stats .wrap{grid-template-columns:1fr;gap:1.6rem}}
+
+/* ---------- Sections ---------- */
+section.band{padding:5rem 0}
+section.band.tint{background:var(--tint)}
+.section-head{max-width:60ch;margin-bottom:2.6rem}
+.section-head p{margin-top:.9rem}
+
+/* ---------- Business area cards ---------- */
+.areas{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem}
+@media(max-width:960px){.areas{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.areas{grid-template-columns:1fr}}
+.area{display:block;background:#fff;border:1px solid var(--line);overflow:hidden;transition:border-color .15s}
+.area:hover{border-color:var(--blue);text-decoration:none}
+.area .shot{height:186px;background:var(--blue-mid);overflow:hidden}
+.area .shot img{width:100%;height:100%;object-fit:cover}
+.area .body{padding:1.4rem 1.35rem 1.6rem}
+.area h3{margin-bottom:.5rem}
+.area p{font-size:.93rem;margin:0}
+
+/* ---------- Full-bleed quote band ---------- */
+.feature{position:relative;min-height:340px;display:flex;align-items:center;background:var(--blue-deep);overflow:hidden}
+.feature img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.feature::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,16,67,.9),rgba(31,27,98,.35))}
+.feature .wrap{position:relative;z-index:2;padding-top:3.5rem;padding-bottom:3.5rem}
+.feature h2{color:#fff;max-width:20ch}
+.feature p{color:#DEDCEC;max-width:52ch;margin-top:1rem}
+
+/* ---------- News ---------- */
+.news{display:grid;grid-template-columns:1.3fr 1fr;gap:2.4rem}
+@media(max-width:860px){.news{grid-template-columns:1fr}}
+.news-lead{background:#fff;border:1px solid var(--line)}
+.news-lead .shot{height:250px;overflow:hidden;background:var(--blue-mid)}
+.news-lead .shot img{width:100%;height:100%;object-fit:cover}
+.news-lead .body{padding:1.8rem}
+.eyebrow{color:var(--red);font-weight:700;font-size:.78rem;letter-spacing:.06em}
+.news-list{list-style:none;margin:0;padding:0}
+.news-list li{display:flex;gap:1rem;border-top:1px solid var(--line);padding:1.1rem 0;align-items:flex-start}
+.news-list li:last-child{border-bottom:1px solid var(--line)}
+.news-list img{width:96px;height:66px;object-fit:cover;flex:none;background:var(--blue-mid)}
+.news-list a{font-weight:600;font-size:.97rem;display:block}
+.news-list small{color:var(--muted);display:block;margin-top:.3rem}
+
+/* ---------- Inline newsletter block ---------- */
+.subscribe{position:relative;background:var(--blue);color:#DEDCEC;overflow:hidden}
+.subscribe > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22}
+.subscribe .wrap{position:relative;z-index:2}
+.subscribe h2{color:#fff;max-width:20ch}
+.sub-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:3rem;align-items:center}
+@media(max-width:860px){.sub-grid{grid-template-columns:1fr;gap:2rem}}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.86rem;font-weight:600;margin-bottom:.4rem;color:inherit}
+.field input,.field select{
+  width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:2px;
+  font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;
+}
+.consent-row{display:flex;gap:.7rem;align-items:flex-start;font-size:.88rem;margin:1.2rem 0}
+.consent-row input{margin-top:.28rem;width:17px;height:17px;accent-color:var(--red);flex:none}
+.subscribe a{color:#fff;text-decoration:underline}
+
+/* ---------- Footer ---------- */
+footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2rem;font-size:.9rem}
+.foot-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:2rem;padding-bottom:2.4rem;border-bottom:1px solid var(--line)}
+@media(max-width:860px){.foot-top{grid-template-columns:1fr 1fr}}
+.foot-top .logo img,.foot-top .logo svg{height:42px}
+.foot-top p{max-width:34ch;font-size:.9rem;margin-top:1.1rem}
+.foot-col h4{font-size:.86rem;margin-bottom:.9rem}
+.foot-col ul{list-style:none;margin:0;padding:0}
+.foot-col li{margin-bottom:.5rem}
+.foot-col a{color:var(--body)}
+.foot-bottom{display:flex;flex-wrap:wrap;gap:1.4rem;align-items:center;padding-top:1.6rem;color:var(--muted);font-size:.84rem}
+.foot-bottom a{color:var(--muted)}
+.foot-bottom .spacer{margin-left:auto}
+
+/* ==========================================================================
+   ACCOUNT VIEW
+   ========================================================================== */
+.acct-hero{position:relative;background:var(--blue);overflow:hidden;padding:2.8rem 0}
+.acct-hero > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2}
+.acct-hero .wrap{position:relative;z-index:2;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.acct-avatar{width:62px;height:62px;border-radius:50%;background:var(--yellow);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;flex:none}
+.acct-hero h1{font-size:1.9rem;color:#fff}
+.acct-hero .sub{font-size:.92rem;margin:.25rem 0 0;color:#DEDCEC}
+.acct-layout{display:grid;grid-template-columns:250px 1fr;gap:3rem;padding:3rem 0 4.5rem;align-items:start}
+@media(max-width:900px){.acct-layout{grid-template-columns:1fr;gap:1.6rem}}
+.acct-nav{list-style:none;margin:0;padding:0;border-left:1px solid var(--line);position:sticky;top:106px}
+@media(max-width:900px){.acct-nav{position:static;display:flex;overflow-x:auto;border-left:0;border-bottom:1px solid var(--line)}}
+.acct-nav button{
+  display:block;width:100%;text-align:left;background:none;border:0;
+  padding:.72rem 1.1rem;color:var(--body);font-size:.95rem;border-left:2px solid transparent;margin-left:-1px;white-space:nowrap;
+}
+.acct-nav button:hover{color:var(--blue)}
+.acct-nav button[aria-current="true"]{color:var(--blue);font-weight:600;border-left-color:var(--red)}
+@media(max-width:900px){
+  .acct-nav button{border-left:0;border-bottom:2px solid transparent;margin:0}
+  .acct-nav button[aria-current="true"]{border-bottom-color:var(--red)}
+}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#fff;border:1px solid var(--line);padding:1.9rem;margin-bottom:1.5rem}
+.card > h2{font-size:1.3rem;margin-bottom:.4rem}
+.card > .lede{font-size:.94rem;max-width:66ch;margin-bottom:1.7rem}
+
+/* Consent purposes: title on its own line, description underneath */
+.purpose{display:flex;gap:1.4rem;align-items:flex-start;padding:1.4rem 0;border-top:1px solid var(--line-soft)}
+.purpose:first-of-type{border-top:0;padding-top:.4rem}
+.purpose .txt{flex:1;min-width:0}
+.purpose .name{display:block;font-weight:600;color:var(--blue);font-size:1.02rem;margin-bottom:.3rem}
+.purpose .desc{display:block;font-size:.91rem;color:var(--body);max-width:70ch;margin:0}
+.purpose .meta{display:block;font-size:.8rem;color:var(--muted);margin-top:.5rem}
+
+/* Toggle */
+.toggle{position:relative;flex:none;width:52px;height:29px}
+.toggle input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
+.toggle .track{position:absolute;inset:0;background:#C6C6D2;border-radius:29px;transition:background .18s}
+.toggle .thumb{position:absolute;top:3px;left:3px;width:23px;height:23px;background:#fff;border-radius:50%;
+  transition:transform .18s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.toggle input:checked ~ .track{background:var(--green)}
+.toggle input:checked ~ .thumb{transform:translateX(23px)}
+.toggle input:focus-visible ~ .track{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Channel matrix */
+.matrix{width:100%;border-collapse:collapse;font-size:.92rem}
+.matrix th,.matrix td{border-bottom:1px solid var(--line-soft);padding:.85rem .6rem;text-align:center}
+.matrix th:first-child,.matrix td:first-child{text-align:left;padding-left:0;color:var(--blue);font-weight:600}
+.matrix thead th{font-size:.8rem;color:var(--muted);font-weight:600}
+.matrix input[type=checkbox]{width:19px;height:19px;accent-color:var(--green);cursor:pointer}
+.matrix-scroll{overflow-x:auto}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:.6rem}
+.chip{border:1px solid var(--line);background:#fff;color:var(--blue);padding:.5rem 1rem;border-radius:2px;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* Radios */
+.radio-row{display:flex;flex-wrap:wrap;gap:1.6rem;font-size:.94rem}
+.radio-row label{display:flex;align-items:center;gap:.5rem;color:var(--ink)}
+.radio-row input{accent-color:var(--blue);width:17px;height:17px}
+
+/* Receipt / audit */
+.receipt{background:var(--tint);border:1px solid var(--line);padding:1.3rem 1.4rem;font-size:.88rem}
+.receipt dl{display:grid;grid-template-columns:auto 1fr;gap:.45rem 1.4rem;margin:.8rem 0 0}
+.receipt dt{color:var(--muted)}
+.receipt dd{margin:0;color:var(--ink)}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:2px;font-size:.76rem;font-weight:700}
+.badge.in{background:#E4F2EA;color:var(--green)}
+.badge.out{background:#EFEFF4;color:var(--muted)}
+.info-grid{display:grid;grid-template-columns:auto 1fr;gap:.6rem 1.8rem;font-size:.94rem}
+.info-grid dt{color:var(--muted)}
+.info-grid dd{margin:0;color:var(--ink)}
+.actions{display:flex;flex-wrap:wrap;gap:.9rem;align-items:center;margin-top:1.9rem;padding-top:1.5rem;border-top:1px solid var(--line-soft)}
+.danger{color:var(--red);background:none;border:0;padding:0;font-weight:600;text-decoration:underline}
+
+/* ==========================================================================
+   MODALS — cookie banner + newsletter pop-up
+   ========================================================================== */
+.overlay{
+  position:fixed;inset:0;background:rgba(20,16,67,.6);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  visibility:hidden;opacity:0;transition:opacity .2s;
+}
+.overlay.show{visibility:visible;opacity:1}
+.modal{
+  background:#fff;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
+  box-shadow:0 24px 60px rgba(20,16,67,.4);position:relative;
+}
+.modal .pad{padding:2rem 2.3rem 2rem}
+.modal h2{font-size:1.45rem;margin-bottom:.7rem}
+.modal p{font-size:.94rem}
+.modal .logo{margin-bottom:1.3rem}
+.modal .logo img,.modal .logo svg{height:42px}
+.modal-close{
+  position:absolute;top:12px;right:12px;background:rgba(255,255,255,.9);border:0;padding:.45rem;
+  color:var(--blue);line-height:0;border-radius:50%;
+}
+.modal-close:hover{background:#fff}
+.modal-close svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.cookie-actions{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.6rem}
+.cookie-actions .btn{flex:1 1 auto;min-width:150px}
+.cookie-links{margin-top:1.2rem;font-size:.84rem;color:var(--muted)}
+.cookie-links a{color:var(--muted);text-decoration:underline}
+.cat{display:flex;gap:1.2rem;align-items:flex-start;padding:1rem 0;border-top:1px solid var(--line-soft)}
+.cat .name{font-weight:600;color:var(--blue);display:block;margin-bottom:.25rem}
+.cat p{font-size:.87rem;margin:0}
+#cookieDetails{display:none;margin-top:1.4rem}
+#cookieDetails.show{display:block}
+
+/* Newsletter pop-up */
+#newsletterModal .modal{max-width:600px}
+.np-shot{position:relative;height:150px;overflow:hidden;background:var(--blue)}
+.np-shot img{width:100%;height:100%;object-fit:cover}
+.np-shot::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,67,.15),rgba(20,16,67,.55))}
+.np-rule{height:5px;background:var(--yellow)}
+#ot-container{margin-top:.4rem}
+/* Neutralise OneTrust's default framing so the form sits on the page cleanly. */
+#ot-container fieldset{border:0;padding:0;margin:0;background:transparent;box-shadow:none}
+#ot-container input[type=text],#ot-container input[type=email]{
+  width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:2px;font-family:inherit;font-size:.95rem;
+}
+#ot-container button,#ot-container input[type=submit]{
+  background:var(--blue);color:#fff;border:0;border-radius:2px;padding:.85rem 1.7rem;font-weight:600;cursor:pointer;
+}
+.demo-note{
+  font-size:.78rem;color:var(--muted);background:var(--tint);border-left:3px solid var(--yellow);
+  padding:.55rem .75rem;margin-top:1.4rem;
+}
+
+/* Toast */
+.toast{
+  position:fixed;left:50%;bottom:32px;transform:translate(-50%,20px);z-index:300;
+  background:var(--blue);color:#fff;padding:.9rem 1.5rem;font-size:.92rem;border-radius:2px;
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;box-shadow:0 8px 24px rgba(20,16,67,.35);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Demo control strip — for re-triggering pop-ups live in front of the customer.
+   Delete this block (and .demobar in the HTML) for a clean hand-off. */
+.demobar{
+  position:fixed;right:16px;bottom:16px;z-index:150;background:#fff;border:1px solid var(--line);
+  box-shadow:0 6px 20px rgba(20,16,67,.16);padding:.7rem .8rem;font-size:.82rem;display:flex;gap:.8rem;align-items:center;
+}
+.demobar strong{color:var(--red);font-size:.74rem;letter-spacing:.05em}
+.demobar button{background:none;border:0;color:var(--blue);text-decoration:underline;padding:0;font-size:.82rem}
+@media(max-width:620px){.demobar{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ==========================================================================
+     Fallback Jotun mark — a drawn version of the logo (red panel above a yellow
+     field, penguin emblem, JOTUN in blue). Only becomes visible if the real
+     logo file can't be loaded. Referenced by <use> so it exists only once.
+     ========================================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="jotun-mark" viewBox="0 0 260 78">
+    <rect x="0" y="0" width="260" height="20" fill="#CC2229"/>
+    <rect x="0" y="20" width="260" height="58" fill="#ECB731"/>
+    <g transform="translate(16,10)">
+      <ellipse cx="24" cy="34" rx="20" ry="30" fill="#1F1B62"/>
+      <ellipse cx="24" cy="40" rx="12" ry="21" fill="#FFFFFF"/>
+      <circle cx="24" cy="12" r="12" fill="#1F1B62"/>
+      <circle cx="19" cy="10" r="2.6" fill="#FFFFFF"/>
+      <circle cx="29" cy="10" r="2.6" fill="#FFFFFF"/>
+      <path d="M24 14 l7 5 -7 4 -7 -4 z" fill="#ECB731"/>
+    </g>
+    <text x="78" y="60" font-family="Arial Black, Arial, Helvetica, sans-serif"
+          font-size="42" font-weight="900" letter-spacing="1" fill="#1F1B62">JOTUN</text>
+  </symbol>
+</svg>
+
+<!-- ======================= HEADER ======================= -->
+<div class="topbar">
+  <div class="wrap">
+    <a href="#news">News and Insights</a>
+    <a href="#contact">Contact us</a>
+    <a href="#lang">English (Global)</a>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap hdr">
+    <a class="logo" href="#home" data-view="home" aria-label="Jotun — home">
+      <!-- Real Jotun logo from their CDN; drawn mark takes over if it fails. -->
+      <img data-jotun-asset src="https://www.jotun.com/globalassets-b2b/.com/jotun-logo.svg"
+           alt="Jotun" referrerpolicy="no-referrer" class="logo-real">
+      <svg class="logo-fallback" style="display:none" viewBox="0 0 260 78" role="img" aria-label="Jotun"><use href="#jotun-mark"/></svg>
+    </a>
+
+    <nav class="main">
+      <a href="#who">Who we are</a>
+      <a href="#areas">Our business areas</a>
+      <a href="#products">Products and services</a>
+      <a href="#commitment">Our commitment</a>
+      <a href="#career">Career</a>
+    </nav>
+
+    <div class="hdr-actions">
+      <button class="icon-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Favourites">
+        <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-9.2A4 4 0 0 1 12 8a4 4 0 0 1 7-2.8c0 4.7-7 14.8-7 14.8z"/></svg>
+      </button>
+      <!-- Login / account entry point -->
+      <button class="icon-btn" id="accountBtn" data-view="account">
+        <span class="avatar" aria-hidden="true">AM</span>
+        <span>My Jotun</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ======================= HOME VIEW ======================= -->
+<main id="view-home">
+
+  <section class="hero">
+    <img class="bgimg" data-jotun-asset referrerpolicy="no-referrer" alt=""
+         src="https://www.jotun.com/contentassets-b2b/61d22a30c2b949d18fa33fef7de00272/hero-headoffice.png?format=webp&quality=90&height=1000">
+    <div class="wrap">
+      <h1>100 years of paints and coatings</h1>
+      <div class="rule"></div>
+      <p>For a century, Jotun has shaped homes, vessels and industries across the world with paints and coatings built to last. This milestone is a tribute to the people, partners and pioneers who brought us here.</p>
+      <p style="margin-top:1.8rem"><a class="btn btn-yellow" href="#who">Discover our story</a></p>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="wrap">
+      <div class="stat"><b>11,000+</b><span>Employees worldwide</span></div>
+      <div class="stat"><b>34+</b><span>NOK billion in operating revenue</span></div>
+      <div class="stat"><b>100+</b><span>Countries where our products are available</span></div>
+    </div>
+  </div>
+
+  <section class="band" id="areas">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Explore our business areas</h2>
+        <p>From beautiful homes to iconic bridges and the hulls of the world's largest vessels — find the coatings built for your industry.</p>
+      </div>
+      <div class="areas">
+        <a class="area" href="#decorative">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/homepage-v2/industryblock_deco.jpg?format=webp&width=1024&height=640&quality=70"></div>
+          <div class="body"><h3>Paint for your home</h3><p>Explore beautiful colours and high-quality paints for both interiors and exteriors.</p></div>
+        </a>
+        <a class="area" href="#shipping">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/homepage-v2/industryblock_shipping.jpg?format=webp&width=1024&height=640&quality=70"></div>
+          <div class="body"><h3>Shipping</h3><p>Marine coatings that protect your vessels and increase hull performance.</p></div>
+        </a>
+        <a class="area" href="#energy">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/homepage-v2/industryblock_energy.jpg?format=webp&width=1024&height=640&quality=70"></div>
+          <div class="body"><h3>Energy</h3><p>Powder and protective coatings for onshore and offshore oil, gas, petrochemical and refining facilities.</p></div>
+        </a>
+        <a class="area" href="#architecture">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/homepage-v2/industryblock_architecturedesign.jpg?format=webp&width=1024&height=640&quality=70"></div>
+          <div class="body"><h3>Architecture and design</h3><p>Long-lasting, beautiful buildings, furniture and iconic bridges.</p></div>
+        </a>
+        <a class="area" href="#infrastructure">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/homepage-v2/industryblock_infastructure.jpg?format=webp&width=1024&height=640&quality=70"></div>
+          <div class="body"><h3>Infrastructure</h3><p>Protection for buildings, civil infrastructure, harbours and airports.</p></div>
+        </a>
+        <a class="area" href="#light-industry">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/b2b/light-industry/hero_industrial-and-oem.jpg?format=webp&width=1024&height=640&quality=70"></div>
+          <div class="body"><h3>Light industry</h3><p>Powder coatings supporting the performance of appliances, furniture and automotive components.</p></div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature">
+    <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+         src="https://www.jotun.com/globalassets-b2b/b2b/shipping/jotun_csc_sunset_2560x1440px.jpg?width=2208&height=1380&quality=70">
+    <div class="wrap">
+      <h2>A clean hull ensures cleaner operations</h2>
+      <p>Biofouling accounts for a fifth of the shipping industry's greenhouse gas emissions. Our hull performance solutions keep vessels clean, cut fuel use and protect marine biodiversity.</p>
+      <p style="margin-top:1.6rem"><a class="btn btn-light" href="#shipping">Explore Clean Shipping</a></p>
+    </div>
+  </section>
+
+  <section class="band tint" id="news">
+    <div class="wrap">
+      <div class="section-head"><h2>Featured news and insights</h2></div>
+      <div class="news">
+        <article class="news-lead">
+          <div class="shot"><img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+            src="https://www.jotun.com/globalassets-b2b/homepage-v2/carousel2_gimle.jpg?format=webp&quality=90&height=1000"></div>
+          <div class="body">
+            <span class="eyebrow">Corporate news</span>
+            <h3 style="margin:.6rem 0 .7rem;font-size:1.35rem">Jotun celebrates 100 years</h3>
+            <p style="font-size:.95rem">As we reflect on a century since Jotun was established, we want to thank the employees, customers and shareholders who helped shape our journey. Every layer of paint that was applied added another layer to the Jotun story.</p>
+            <a class="btn-link" href="#news">Read the story</a>
+          </div>
+        </article>
+        <ul class="news-list">
+          <li>
+            <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+              src="https://www.jotun.com/contentassets-b2b/9851a70c924f4e37b3ac836a3d458dc3/p06_3161.jpg?width=2208&height=1380&quality=70">
+            <div><a href="#news">Carnival Cruise Line pioneers hull cleaning for cruise operations with Jotun</a><small>Jotun Hull Skater</small></div>
+          </li>
+          <li>
+            <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+              src="https://www.jotun.com/globalassets-b2b/b2b/shipping/jotun_csc_sunset_2560x1440px.jpg?width=2208&height=1380&quality=70">
+            <div><a href="#news">Jotun continues to secure DNV verification for speed loss performance</a><small>Jotun Insider</small></div>
+          </li>
+          <li>
+            <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+              src="https://www.jotun.com/globalassets-b2b/homepage-v2/carousel4_rnd.jpg?format=webp&quality=90&height=1000">
+            <div><a href="#news">Jotun scores gold in sustainability</a><small>Corporate news</small></div>
+          </li>
+          <li>
+            <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+              src="https://www.jotun.com/globalassets-b2b/homepage-v2/carousel6_hss.jpg?format=webp&quality=90&height=1000">
+            <div><a href="#news">Stronger than expected from Jotun</a><small>Corporate news</small></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="band subscribe" id="insider">
+    <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+         src="https://www.jotun.com/globalassets-b2b/b2b/shipping/hero_carriers-cargo.jpg?width=2208&height=1380&quality=70">
+    <div class="wrap sub-grid">
+      <div>
+        <h2>Subscribe to Jotun Insider</h2>
+        <p style="margin-top:1rem">Industry updates, technical insight and product news — sent to your inbox and tailored to the sectors you work in.</p>
+      </div>
+      <div>
+        <div class="field"><label for="inName">Name</label><input id="inName" type="text" placeholder="Your full name"></div>
+        <div class="field"><label for="inMail">E-mail</label><input id="inMail" type="email" placeholder="you@company.com"></div>
+        <div class="field"><label for="inInd">Industry</label>
+          <select id="inInd">
+            <option>Choose your preferred industry</option>
+            <option>Shipping</option><option>Energy</option>
+            <option>Architecture and design</option><option>Infrastructure</option><option>Light industry</option>
+          </select>
+        </div>
+        <label class="consent-row"><input type="checkbox">
+          <span>I consent to my e-mail address being used in accordance with the <a href="#privacy">privacy policy</a>.</span>
+        </label>
+        <button class="btn btn-yellow" onclick="showToast('Subscription preferences saved')">Subscribe</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ======================= ACCOUNT VIEW ======================= -->
+<main id="view-account" hidden>
+
+  <div class="acct-hero">
+    <img data-jotun-asset loading="lazy" referrerpolicy="no-referrer" alt=""
+         src="https://www.jotun.com/globalassets-b2b/b2b/shipping/hero_shipping.jpg?width=2400&height=1500&quality=70">
+    <div class="wrap">
+      <div class="acct-avatar">AM</div>
+      <div>
+        <h1>Welcome back, Anuschka</h1>
+        <p class="sub">Anuschka Mader · Coating Specification Manager · Jotun Insider member since March 2024</p>
+      </div>
+      <div style="margin-left:auto"><button class="btn btn-light btn-sm" data-view="home">Back to jotun.com</button></div>
+    </div>
+  </div>
+
+  <div class="wrap acct-layout">
+    <ul class="acct-nav">
+      <li><button data-panel="overview" aria-current="true">Overview</button></li>
+      <li><button data-panel="details">My details</button></li>
+      <li><button data-panel="prefs">Communication preferences</button></li>
+      <li><button data-panel="favourites">Favourites</button></li>
+      <li><button data-panel="documents">Technical documents</button></li>
+      <li><button data-panel="privacy">Privacy and data</button></li>
+    </ul>
+
+    <div>
+      <!-- ---------- Overview ---------- -->
+      <section class="panel active" id="panel-overview">
+        <div class="card">
+          <h2>Your account at a glance</h2>
+          <p class="lede">Everything you have saved, subscribed to and consented to, in one place.</p>
+          <dl class="info-grid">
+            <dt>Jotun Insider</dt><dd><span class="badge in">Subscribed</span> — Shipping and Energy updates, monthly</dd>
+            <dt>Saved favourites</dt><dd>7 products, 3 colours</dd>
+            <dt>Technical documents</dt><dd>12 downloads this year</dd>
+            <dt>Preferences last updated</dt><dd>6 September 2026</dd>
+          </dl>
+          <div class="actions">
+            <button class="btn btn-primary btn-sm" data-goto="prefs">Manage communication preferences</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- My details ---------- -->
+      <section class="panel" id="panel-details">
+        <div class="card">
+          <h2>My details</h2>
+          <p class="lede">Used to personalise the technical information and colour recommendations we send you.</p>
+          <div class="field"><label for="dName">Full name</label><input id="dName" type="text" value="Anuschka Mader"></div>
+          <div class="field"><label for="dMail">E-mail</label><input id="dMail" type="email" value="anuschka.mader@example.com"></div>
+          <div class="field"><label for="dPhone">Mobile</label><input id="dPhone" type="text" value="+47 900 12 345"></div>
+          <div class="field"><label for="dCompany">Company</label><input id="dCompany" type="text" value="Nordvest Marine Services AS"></div>
+          <div class="field"><label for="dCountry">Country</label>
+            <select id="dCountry"><option>Norway</option><option>Germany</option><option>Netherlands</option><option>United Kingdom</option><option>Singapore</option></select>
+          </div>
+          <div class="actions"><button class="btn btn-primary btn-sm" onclick="showToast('Details saved')">Save changes</button></div>
+        </div>
+      </section>
+
+      <!-- ---------- Communication preferences (UCPM focus) ---------- -->
+      <section class="panel" id="panel-prefs">
+
+        <!-- OPTIONAL: OneTrust hosted Preference Centre embeds here when
+             OT_CONFIG.prefCenterCpId is set. The demo panels below hide themselves. -->
+        <div id="ot-pref-center"></div>
+
+        <div id="demoPrefs">
+          <div class="card">
+            <h2>What you hear from us</h2>
+            <p class="lede">Choose the purposes you are happy for Jotun to contact you about. You can change or withdraw any of these at any time — your choices apply across every Jotun site, app and local office.</p>
+
+            <div class="purpose">
+              <div class="txt">
+                <span class="name">Jotun Insider newsletter</span>
+                <p class="desc">Industry updates, technical insight and case studies from the sectors you select below.</p>
+                <span class="meta">Opted in 12 March 2024 · Jotun Insider sign-up form</span>
+              </div>
+              <span class="toggle"><input type="checkbox" checked aria-label="Jotun Insider newsletter"><span class="track"></span><span class="thumb"></span></span>
+            </div>
+
+            <div class="purpose">
+              <div class="txt">
+                <span class="name">Product and coating updates</span>
+                <p class="desc">New products, reformulations, and changes to specifications or datasheets that affect the systems you use.</p>
+                <span class="meta">Opted in 12 March 2024 · Jotun Insider sign-up form</span>
+              </div>
+              <span class="toggle"><input type="checkbox" checked aria-label="Product and coating updates"><span class="track"></span><span class="thumb"></span></span>
+            </div>
+
+            <div class="purpose">
+              <div class="txt">
+                <span class="name">Events, webinars and trade fairs</span>
+                <p class="desc">Invitations to Jotun technical sessions, customer days and the industry events we attend.</p>
+                <span class="meta">Not set</span>
+              </div>
+              <span class="toggle"><input type="checkbox" aria-label="Events, webinars and trade fairs"><span class="track"></span><span class="thumb"></span></span>
+            </div>
+
+            <div class="purpose">
+              <div class="txt">
+                <span class="name">Offers from your local Jotun company</span>
+                <p class="desc">Pricing, campaigns and dealer promotions from the Jotun company operating in your country.</p>
+                <span class="meta">Opted out 4 July 2026 · Preference centre</span>
+              </div>
+              <span class="toggle"><input type="checkbox" aria-label="Offers from your local Jotun company"><span class="track"></span><span class="thumb"></span></span>
+            </div>
+
+            <div class="purpose">
+              <div class="txt">
+                <span class="name">Research and product feedback</span>
+                <p class="desc">Occasional surveys and interview requests that help us improve our coatings and services.</p>
+                <span class="meta">Not set</span>
+              </div>
+              <span class="toggle"><input type="checkbox" aria-label="Research and product feedback"><span class="track"></span><span class="thumb"></span></span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>How we reach you</h2>
+            <p class="lede">Pick a channel for each purpose. Leaving a channel unticked stops that type of message on that channel only.</p>
+            <div class="matrix-scroll">
+              <table class="matrix">
+                <thead><tr><th scope="col">Purpose</th><th scope="col">E-mail</th><th scope="col">Phone</th><th scope="col">SMS</th><th scope="col">Post</th><th scope="col">In person</th></tr></thead>
+                <tbody>
+                  <tr><td>Jotun Insider newsletter</td>
+                    <td><input type="checkbox" checked aria-label="Newsletter by e-mail"></td><td><input type="checkbox" aria-label="Newsletter by phone"></td>
+                    <td><input type="checkbox" aria-label="Newsletter by SMS"></td><td><input type="checkbox" aria-label="Newsletter by post"></td><td><input type="checkbox" aria-label="Newsletter in person"></td></tr>
+                  <tr><td>Product and coating updates</td>
+                    <td><input type="checkbox" checked aria-label="Product updates by e-mail"></td><td><input type="checkbox" checked aria-label="Product updates by phone"></td>
+                    <td><input type="checkbox" aria-label="Product updates by SMS"></td><td><input type="checkbox" aria-label="Product updates by post"></td><td><input type="checkbox" checked aria-label="Product updates in person"></td></tr>
+                  <tr><td>Events, webinars and trade fairs</td>
+                    <td><input type="checkbox" aria-label="Events by e-mail"></td><td><input type="checkbox" aria-label="Events by phone"></td>
+                    <td><input type="checkbox" aria-label="Events by SMS"></td><td><input type="checkbox" aria-label="Events by post"></td><td><input type="checkbox" aria-label="Events in person"></td></tr>
+                  <tr><td>Offers from your local Jotun company</td>
+                    <td><input type="checkbox" aria-label="Offers by e-mail"></td><td><input type="checkbox" aria-label="Offers by phone"></td>
+                    <td><input type="checkbox" aria-label="Offers by SMS"></td><td><input type="checkbox" aria-label="Offers by post"></td><td><input type="checkbox" aria-label="Offers in person"></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Topics you care about</h2>
+            <p class="lede">We use these to decide what goes into your Jotun Insider edition.</p>
+            <div class="chips" id="topicChips">
+              <button class="chip" aria-pressed="true">Shipping and hull performance</button>
+              <button class="chip" aria-pressed="true">Energy and offshore</button>
+              <button class="chip" aria-pressed="false">Architecture and design</button>
+              <button class="chip" aria-pressed="false">Infrastructure</button>
+              <button class="chip" aria-pressed="false">Light industry and powder</button>
+              <button class="chip" aria-pressed="false">Decorative and colour trends</button>
+              <button class="chip" aria-pressed="true">Sustainability and regulation</button>
+            </div>
+
+            <h3 style="margin:2.2rem 0 .9rem">How often</h3>
+            <div class="radio-row">
+              <label><input type="radio" name="freq"> Weekly</label>
+              <label><input type="radio" name="freq" checked> Monthly</label>
+              <label><input type="radio" name="freq"> Quarterly</label>
+              <label><input type="radio" name="freq"> Only important updates</label>
+            </div>
+
+            <h3 style="margin:2.2rem 0 .9rem">Preferred language</h3>
+            <div class="radio-row">
+              <label><input type="radio" name="lang" checked> English</label>
+              <label><input type="radio" name="lang"> Norsk</label>
+              <label><input type="radio" name="lang"> Deutsch</label>
+              <label><input type="radio" name="lang"> Nederlands</label>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" onclick="showToast('Preferences saved across all Jotun channels')">Save preferences</button>
+              <button class="danger" onclick="withdrawAll()">Withdraw all consent</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Favourites ---------- -->
+      <section class="panel" id="panel-favourites">
+        <div class="card">
+          <h2>Favourites</h2>
+          <p class="lede">Products and colours you have saved while browsing jotun.com.</p>
+          <dl class="info-grid">
+            <dt>SeaQuantum Skate</dt><dd>Antifouling · saved 2 August 2026</dd>
+            <dt>Jotamastic 90</dt><dd>Protective epoxy mastic · saved 2 August 2026</dd>
+            <dt>Jotachar JF750</dt><dd>Passive fire protection · saved 14 July 2026</dd>
+            <dt>Hardtop AX</dt><dd>Polyurethane topcoat · saved 14 July 2026</dd>
+            <dt>Colour 4153 Apatite</dt><dd>Saved 9 June 2026</dd>
+          </dl>
+        </div>
+      </section>
+
+      <!-- ---------- Documents ---------- -->
+      <section class="panel" id="panel-documents">
+        <div class="card">
+          <h2>Technical documents</h2>
+          <p class="lede">Datasheets, safety data sheets and application guides you have downloaded.</p>
+          <dl class="info-grid">
+            <dt>SeaQuantum Skate TDS</dt><dd>PDF · downloaded 28 August 2026</dd>
+            <dt>Jotamastic 90 SDS (EN)</dt><dd>PDF · downloaded 28 August 2026</dd>
+            <dt>Hull Skating Solutions overview</dt><dd>PDF · downloaded 3 July 2026</dd>
+          </dl>
+        </div>
+      </section>
+
+      <!-- ---------- Privacy and data ---------- -->
+      <section class="panel" id="panel-privacy">
+        <div class="card">
+          <h2>Your consent record</h2>
+          <p class="lede">Every choice you make is stored with a timestamp, the notice you were shown and where it was captured.</p>
+          <div class="receipt">
+            <strong style="color:var(--blue)">Most recent consent receipt</strong>
+            <dl>
+              <dt>Receipt ID</dt><dd>JT-CR-2026-0906-88421</dd>
+              <dt>Data subject</dt><dd>Anuschka Mader · anuschka.mader@example.com</dd>
+              <dt>Purpose</dt><dd>Jotun Insider newsletter <span class="badge in">Opted in</span></dd>
+              <dt>Captured at</dt><dd>jotun.com/ww-en — Jotun Insider sign-up pop-up</dd>
+              <dt>Notice version</dt><dd>Privacy statement v4.2 (EN, global)</dd>
+              <dt>Timestamp</dt><dd>6 September 2026, 09:41 CET</dd>
+              <dt>Legal basis</dt><dd>Consent (GDPR Art. 6(1)(a))</dd>
+            </dl>
+          </div>
+          <div class="actions">
+            <button class="btn btn-ghost btn-sm" onclick="showToast('Consent history exported')">Download my consent history</button>
+            <button class="btn btn-ghost btn-sm" onclick="showToast('Data request submitted')">Request a copy of my data</button>
+            <button class="btn-link" onclick="openCookie(true)">Cookie settings</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ======================= FOOTER ======================= -->
+<footer class="site">
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <span class="logo">
+          <img data-jotun-asset src="https://www.jotun.com/globalassets-b2b/.com/jotun-logo.svg"
+               alt="Jotun" referrerpolicy="no-referrer" class="logo-real">
+          <svg class="logo-fallback" style="display:none" viewBox="0 0 260 78" role="img" aria-label="Jotun"><use href="#jotun-mark"/></svg>
+        </span>
+        <p>Jotun is one of the world's leading paints and coatings manufacturers, combining the best quality with constant innovation and creativity.</p>
+      </div>
+      <div class="foot-col"><h4>Company</h4><ul>
+        <li><a href="#who">Who we are</a></li><li><a href="#areas">Our business areas</a></li>
+        <li><a href="#commitment">Our commitment</a></li><li><a href="#career">Career</a></li></ul></div>
+      <div class="foot-col"><h4>Support</h4><ul>
+        <li><a href="#contact">Contact us</a></li><li><a href="#news">News and Insights</a></li>
+        <li><a href="#products">Technical documents</a></li><li><a href="#dealers">Find a dealer</a></li></ul></div>
+      <div class="foot-col"><h4>Follow us</h4><ul>
+        <li><a href="#social">Facebook</a></li><li><a href="#social">LinkedIn</a></li>
+        <li><a href="#social">Jotun Performance Coatings</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">
+      <span>2026 © Jotun. All rights reserved.</span>
+      <a href="#accessibility">Accessibility Statement</a>
+      <a href="#cookie-policy">Cookie Policy</a>
+      <a href="#privacy">Privacy Policy</a>
+      <!-- Re-opens the consent banner. Routes to OneTrust.ToggleInfoDisplay() once the CMP is live. -->
+      <button class="btn-link" style="font-size:.84rem;font-weight:500" onclick="openCookie(true)">Cookie settings</button>
+      <span class="spacer"></span>
+      <span>Demo environment — not affiliated with Jotun</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ======================= COOKIE BANNER (centred modal) ======================= -->
+<!-- DEMO CMP BANNER. Hides itself automatically if the real OneTrust banner loads. -->
+<div class="overlay" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="ckTitle">
+  <div class="modal">
+    <div class="np-rule"></div>
+    <div class="pad">
+      <span class="logo">
+        <img data-jotun-asset src="https://www.jotun.com/globalassets-b2b/.com/jotun-logo.svg"
+             alt="Jotun" referrerpolicy="no-referrer" class="logo-real">
+        <svg class="logo-fallback" style="display:none" viewBox="0 0 260 78" role="img" aria-label="Jotun"><use href="#jotun-mark"/></svg>
+      </span>
+      <h2 id="ckTitle">We value your privacy</h2>
+      <p>We use cookies to make our site work, to remember your preferences, and — with your permission — to measure how the site is used and show you relevant Jotun content. You can change your choice at any time under Cookie settings.</p>
+
+      <div id="cookieDetails">
+        <div class="cat">
+          <div class="txt" style="flex:1">
+            <span class="name">Strictly necessary</span>
+            <p>Required for the site to function. These cannot be switched off.</p>
+          </div>
+          <span class="badge in" style="flex:none;margin-top:.2rem">Always active</span>
+        </div>
+        <div class="cat">
+          <div class="txt" style="flex:1">
+            <span class="name">Performance</span>
+            <p>Help us understand which pages and products people visit most.</p>
+          </div>
+          <span class="toggle"><input type="checkbox" checked aria-label="Performance cookies"><span class="track"></span><span class="thumb"></span></span>
+        </div>
+        <div class="cat">
+          <div class="txt" style="flex:1">
+            <span class="name">Functional</span>
+            <p>Remember choices such as your country, language and saved favourites.</p>
+          </div>
+          <span class="toggle"><input type="checkbox" checked aria-label="Functional cookies"><span class="track"></span><span class="thumb"></span></span>
+        </div>
+        <div class="cat">
+          <div class="txt" style="flex:1">
+            <span class="name">Targeting</span>
+            <p>Used by us and our partners to show you Jotun content on other sites.</p>
+          </div>
+          <span class="toggle"><input type="checkbox" aria-label="Targeting cookies"><span class="track"></span><span class="thumb"></span></span>
+        </div>
+      </div>
+
+      <div class="cookie-actions">
+        <button class="btn btn-primary" onclick="closeCookie('accept')">Accept all cookies</button>
+        <button class="btn btn-ghost" onclick="closeCookie('reject')">Reject all</button>
+        <button class="btn btn-ghost" id="ckManage" onclick="toggleCookieDetails()">Manage settings</button>
+      </div>
+      <p class="cookie-links"><a href="#cookie-policy">Cookie Policy</a> · <a href="#privacy">Privacy Policy</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= NEWSLETTER POP-UP ======================= -->
+<div class="overlay" id="newsletterModal" role="dialog" aria-modal="true" aria-labelledby="nlTitle">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewsletter()" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="np-shot">
+      <img data-jotun-asset referrerpolicy="no-referrer" alt=""
+           src="https://www.jotun.com/globalassets-b2b/b2b/shipping/hero_passenger.jpg?width=2208&height=1380&quality=70">
+    </div>
+    <div class="np-rule"></div>
+    <div class="pad">
+      <span class="logo">
+        <img data-jotun-asset src="https://www.jotun.com/globalassets-b2b/.com/jotun-logo.svg"
+             alt="Jotun" referrerpolicy="no-referrer" class="logo-real">
+        <svg class="logo-fallback" style="display:none" viewBox="0 0 260 78" role="img" aria-label="Jotun"><use href="#jotun-mark"/></svg>
+      </span>
+      <h2 id="nlTitle">Get Jotun Insider</h2>
+      <p>Technical insight, product news and case studies from the industries you work in. Choose your sector and we'll tailor what you receive.</p>
+
+      <!-- ==================================================================
+           ONETRUST EMBEDDED WEB FORM SLOT
+           When OT_CONFIG.webformCpId is set, OneTrust.webform.InstallCP renders
+           the real form into #ot-container and the demo form below is removed.
+           Install happens on pop-up OPEN so the container is visible and laid out.
+           ================================================================== -->
+      <div id="ot-container"></div>
+
+      <div id="nlDemoForm">
+        <div class="field"><label for="nlName">Name</label><input id="nlName" type="text" placeholder="Your full name"></div>
+        <div class="field"><label for="nlMail">E-mail</label><input id="nlMail" type="email" placeholder="you@company.com"></div>
+        <div class="field"><label for="nlInd">Industry</label>
+          <select id="nlInd">
+            <option>Choose your preferred industry</option>
+            <option>Shipping</option><option>Energy</option>
+            <option>Architecture and design</option><option>Infrastructure</option><option>Light industry</option>
+          </select>
+        </div>
+        <label class="consent-row"><input type="checkbox" id="nlConsent">
+          <span>I consent to my e-mail address being used in accordance with the <a href="#privacy">privacy policy</a>. I can withdraw this at any time in My Jotun.</span>
+        </label>
+        <button class="btn btn-primary" style="width:100%" onclick="submitNewsletter()">Subscribe</button>
+        <p class="demo-note">Demo placeholder — this block is replaced by the OneTrust embedded web form once the collection point ID is added to OT_CONFIG.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Demo control strip — delete before hand-off if you want a clean build. -->
+<div class="demobar">
+  <strong>DEMO</strong>
+  <button onclick="openCookie(true)">Cookie banner</button>
+  <button onclick="openNewsletter()">Sign-up pop-up</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var CFG = window.OT_CONFIG || {};
+
+  /* ---------------- Logo fallback ----------------
+     If Jotun's CDN blocks the hotlinked logo, swap in the drawn mark. */
+  document.querySelectorAll('img.logo-real').forEach(function(img){
+    img.addEventListener('error', function(){
+      img.style.display = 'none';
+      var fb = img.parentNode.querySelector('.logo-fallback');
+      if (fb) fb.style.display = 'block';
+    });
+  });
+
+  /* ---------------- View switching (home / account) ---------------- */
+  function setView(name){
+    document.getElementById('view-home').hidden    = (name !== 'home');
+    document.getElementById('view-account').hidden = (name !== 'account');
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-view]').forEach(function(el){
+    el.addEventListener('click', function(e){ e.preventDefault(); setView(el.getAttribute('data-view')); });
+  });
+
+  /* ---------------- Account tabs ---------------- */
+  var navBtns = document.querySelectorAll('.acct-nav button');
+  function setPanel(id){
+    navBtns.forEach(function(b){ b.setAttribute('aria-current', b.getAttribute('data-panel') === id ? 'true' : 'false'); });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active', p.id === 'panel-' + id); });
+  }
+  navBtns.forEach(function(b){ b.addEventListener('click', function(){ setPanel(b.getAttribute('data-panel')); }); });
+  document.querySelectorAll('[data-goto]').forEach(function(b){
+    b.addEventListener('click', function(){ setPanel(b.getAttribute('data-goto')); window.scrollTo(0, 0); });
+  });
+
+  /* ---------------- Topic chips ---------------- */
+  var chips = document.getElementById('topicChips');
+  if (chips) chips.addEventListener('click', function(e){
+    var c = e.target.closest('.chip'); if(!c) return;
+    c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  });
+
+  /* ---------------- Toast ---------------- */
+  var toastEl = document.getElementById('toast'), toastTimer;
+  window.showToast = function(msg){
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
+  };
+
+  window.withdrawAll = function(){
+    document.querySelectorAll('#demoPrefs input[type=checkbox]').forEach(function(i){ i.checked = false; });
+    showToast('All consent withdrawn — recorded with a timestamp');
+  };
+
+  /* ---------------- Cookie banner ---------------- */
+  var cookieModal = document.getElementById('cookieModal');
+
+  window.openCookie = function(force){
+    // If the real OneTrust banner is on the page, hand over to it instead.
+    if (window.OneTrust && typeof window.OneTrust.ToggleInfoDisplay === 'function'){
+      if (force) window.OneTrust.ToggleInfoDisplay();
+      return;
+    }
+    cookieModal.classList.add('show');
+  };
+  window.toggleCookieDetails = function(){
+    var d = document.getElementById('cookieDetails');
+    d.classList.toggle('show');
+    document.getElementById('ckManage').textContent = d.classList.contains('show') ? 'Hide settings' : 'Manage settings';
+  };
+  window.closeCookie = function(choice){
+    cookieModal.classList.remove('show');
+    showToast(choice === 'accept' ? 'All cookies accepted' :
+              choice === 'reject' ? 'Only necessary cookies used' : 'Cookie preferences saved');
+    setTimeout(openNewsletter, 1600);   // newsletter pop-up follows the cookie choice
+  };
+
+  /* ---------------- Newsletter pop-up ---------------- */
+  var nlModal = document.getElementById('newsletterModal');
+  function nlIsOpen(){ return nlModal.classList.contains('show'); }
+
+  window.openNewsletter = function(){
+    nlModal.classList.add('show');
+    startWebformInstall();            // install only now: container is visible
+  };
+  window.closeNewsletter = function(){ nlModal.classList.remove('show'); };
+
+  window.submitNewsletter = function(){
+    if (!document.getElementById('nlConsent').checked){
+      showToast('Tick the consent box to subscribe'); return;
+    }
+    closeNewsletter();
+    showToast('Subscribed — your consent has been recorded');
+  };
+
+  nlModal.addEventListener('click', function(e){ if (e.target === nlModal) closeNewsletter(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && nlIsOpen()) closeNewsletter(); });
+
+  /* ==========================================================================
+     ONETRUST EMBEDDED WEB FORM INSTALL
+     Polls until the SDK is ready AND the pop-up is open, then installs once.
+     This is the fix for the "form never renders" problem: the SDK will not
+     render into a container that is hidden or not laid out.
+     ========================================================================== */
+  var otPoller = null, otLastCall = 0;
+
+  function otReady(){ return window.OneTrust && window.OneTrust.webform && window.OneTrust.webform.InstallCP; }
+  function otRendered(){ var c = document.getElementById('ot-container'); return !!(c && c.children.length); }
+
+  function startWebformInstall(){
+    var cp = CFG.webformCpId;
+    if (!cp) return;                       // no ID yet → demo form stays
+    if (otPoller || otRendered()) return;
+    var attempts = 0;
+    otPoller = setInterval(function(){
+      attempts++;
+      if (otRendered()){
+        clearInterval(otPoller); otPoller = null;
+        var demo = document.getElementById('nlDemoForm'); if (demo) demo.style.display = 'none';
+        return;
+      }
+      if (nlIsOpen() && otReady()){
+        var now = Date.now();
+        if (now - otLastCall >= 1500){
+          otLastCall = now;
+          try { OneTrust.webform.InstallCP(cp, { target: "#ot-container" }); }
+          catch(err){ console.warn('OneTrust InstallCP failed:', err); }
+        }
+      }
+      if (attempts > 60){
+        clearInterval(otPoller); otPoller = null;
+        if (!otRendered()) console.warn('OneTrust web form did not render — check the collection point is published and this domain is authorised.');
+      }
+    }, 300);
+  }
+
+  window.addEventListener('OnetrustFormLoaded', function(e){
+    console.log('OnetrustFormLoaded', e.detail);
+    var demo = document.getElementById('nlDemoForm'); if (demo) demo.style.display = 'none';
+  });
+  window.addEventListener('OneTrustWebFormSubmitted', function(){
+    showToast('Subscribed — your consent has been recorded');
+    setTimeout(closeNewsletter, 500);
+  });
+
+  /* Optional: hosted preference centre on the account page. */
+  (function(){
+    var cp = CFG.prefCenterCpId; if (!cp) return;
+    var tries = 0;
+    var t = setInterval(function(){
+      tries++;
+      if (otReady()){
+        clearInterval(t);
+        try {
+          OneTrust.webform.InstallCP(cp, { target: "#ot-pref-center" });
+          var d = document.getElementById('demoPrefs'); if (d) d.style.display = 'none';
+        } catch(err){ console.warn('OneTrust preference centre install failed:', err); }
+      }
+      if (tries > 60) clearInterval(t);
+    }, 300);
+  })();
+
+  /* ---------------- Page load sequence ---------------- */
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      // Skip the demo banner entirely if the real OneTrust CMP is running.
+      if (document.getElementById('onetrust-banner-sdk') || (window.OneTrust && window.OneTrust.IsAlertBoxClosed)) return;
+      openCookie();
+    }, 900);
+  });
+})();
+</script>
+</body>
+</html>
