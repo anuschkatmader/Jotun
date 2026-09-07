@@ -62,7 +62,12 @@
     // "Privacy and preferences" tab of My Jotun. Its internal look is set in
     // OneTrust's own branding settings — a cross-origin frame can't be styled
     // from this page.
-    prefCentreUrl:  "https://privacyportaltrial.onetrust.com/ui/#/preferences/multipage/login/8379de65-2015-418f-ba60-09e6949169eb"
+    prefCentreUrl:  "https://privacyportaltrial.onetrust.com/ui/#/preferences/multipage/login/8379de65-2015-418f-ba60-09e6949169eb",
+
+    // Set to false to turn OFF the custom dropdowns and fall back to OneTrust's
+    // own field controls. Colours and fonts still apply. Use this if a field
+    // ever stops submitting correctly — it's an instant safety valve mid-demo.
+    styleFormFields: true
   };
 
   /* OtSdk queue stub — must sit BEFORE the OtFormStub script. */
@@ -634,6 +639,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       <li><button data-panel="overview" aria-current="true">Overview</button></li>
       <li><button data-panel="details">My details</button></li>
       <li><button data-panel="prefs">Privacy and preferences</button></li>
+      <li><button data-panel="comms">Communication preferences</button></li>
       <li><button data-panel="favourites">Favourites</button></li>
       <li><button data-panel="documents">Technical documents</button></li>
       <li><button data-panel="privacy">Privacy and data</button></li>
@@ -694,6 +700,116 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
             <div class="ot-frame-loading">Loading your preference centre…</div>
             <iframe id="otPrefFrame" title="Jotun privacy and preference centre"
                     referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Communication preferences (in-page version) ----------
+           The same consent model rendered natively in the Jotun page, shown
+           alongside the hosted OneTrust centre so both options can be
+           demonstrated side by side. -->
+      <section class="panel" id="panel-comms">
+        <div class="card">
+          <h2>What you hear from us</h2>
+          <p class="lede">Choose the purposes you are happy for Jotun to contact you about. You can change or withdraw any of these at any time — your choices apply across every Jotun site, app and local office.</p>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Jotun Insider newsletter</span>
+              <p class="desc">Industry updates, technical insight and case studies from the sectors you select below.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" checked aria-label="Jotun Insider newsletter"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Product and coating updates</span>
+              <p class="desc">New products, reformulations, and changes to specifications or datasheets that affect the systems you use.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" checked aria-label="Product and coating updates"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Events, webinars and trade fairs</span>
+              <p class="desc">Invitations to Jotun technical sessions, customer days and the industry events we attend.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" aria-label="Events, webinars and trade fairs"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Offers from your local Jotun company</span>
+              <p class="desc">Pricing, campaigns and dealer promotions from the Jotun company operating in your country.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" aria-label="Offers from your local Jotun company"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Research and product feedback</span>
+              <p class="desc">Occasional surveys and interview requests that help us improve our coatings and services.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" aria-label="Research and product feedback"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>How we reach you</h2>
+          <p class="lede">Pick a channel for each purpose. Leaving a channel unticked stops that type of message on that channel only.</p>
+          <div class="matrix-scroll">
+            <table class="matrix">
+              <thead><tr><th scope="col">Purpose</th><th scope="col">E-mail</th><th scope="col">Phone</th><th scope="col">SMS</th><th scope="col">Post</th><th scope="col">In person</th></tr></thead>
+              <tbody>
+                <tr><td>Jotun Insider newsletter</td>
+                  <td><input type="checkbox" checked aria-label="Newsletter by e-mail"></td><td><input type="checkbox" aria-label="Newsletter by phone"></td>
+                  <td><input type="checkbox" aria-label="Newsletter by SMS"></td><td><input type="checkbox" aria-label="Newsletter by post"></td><td><input type="checkbox" aria-label="Newsletter in person"></td></tr>
+                <tr><td>Product and coating updates</td>
+                  <td><input type="checkbox" checked aria-label="Product updates by e-mail"></td><td><input type="checkbox" checked aria-label="Product updates by phone"></td>
+                  <td><input type="checkbox" aria-label="Product updates by SMS"></td><td><input type="checkbox" aria-label="Product updates by post"></td><td><input type="checkbox" checked aria-label="Product updates in person"></td></tr>
+                <tr><td>Events, webinars and trade fairs</td>
+                  <td><input type="checkbox" aria-label="Events by e-mail"></td><td><input type="checkbox" aria-label="Events by phone"></td>
+                  <td><input type="checkbox" aria-label="Events by SMS"></td><td><input type="checkbox" aria-label="Events by post"></td><td><input type="checkbox" aria-label="Events in person"></td></tr>
+                <tr><td>Offers from your local Jotun company</td>
+                  <td><input type="checkbox" aria-label="Offers by e-mail"></td><td><input type="checkbox" aria-label="Offers by phone"></td>
+                  <td><input type="checkbox" aria-label="Offers by SMS"></td><td><input type="checkbox" aria-label="Offers by post"></td><td><input type="checkbox" aria-label="Offers in person"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Topics you care about</h2>
+          <p class="lede">We use these to decide what goes into your Jotun Insider edition.</p>
+          <div class="chips" id="topicChips">
+            <button class="chip" aria-pressed="true">Shipping and hull performance</button>
+            <button class="chip" aria-pressed="true">Energy and offshore</button>
+            <button class="chip" aria-pressed="false">Architecture and design</button>
+            <button class="chip" aria-pressed="false">Infrastructure</button>
+            <button class="chip" aria-pressed="false">Light industry and powder</button>
+            <button class="chip" aria-pressed="false">Decorative and colour trends</button>
+            <button class="chip" aria-pressed="true">Sustainability and regulation</button>
+          </div>
+
+          <h3 style="margin:2.2rem 0 .9rem">How often</h3>
+          <div class="radio-row">
+            <label><input type="radio" name="freq"> Weekly</label>
+            <label><input type="radio" name="freq" checked> Monthly</label>
+            <label><input type="radio" name="freq"> Quarterly</label>
+            <label><input type="radio" name="freq"> Only important updates</label>
+          </div>
+
+          <h3 style="margin:2.2rem 0 .9rem">Preferred language</h3>
+          <div class="radio-row">
+            <label><input type="radio" name="lang" checked> English</label>
+            <label><input type="radio" name="lang"> Norsk</label>
+            <label><input type="radio" name="lang"> Deutsch</label>
+            <label><input type="radio" name="lang"> Nederlands</label>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" onclick="showToast('Preferences saved across all Jotun channels')">Save preferences</button>
+            <button class="danger" onclick="withdrawAll()">Withdraw all consent</button>
           </div>
         </div>
       </section>
@@ -951,6 +1067,11 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     clearTimeout(toastTimer); toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
   };
 
+  window.withdrawAll = function(){
+    document.querySelectorAll('#panel-comms input[type=checkbox]').forEach(function(i){ i.checked = false; });
+    showToast('All consent withdrawn — recorded with a timestamp');
+  };
+
   /* ---------------- Cookie banner ---------------- */
   var cookieModal = document.getElementById('cookieModal');
 
@@ -1145,10 +1266,13 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     '__OT__ label:has(input[type=checkbox]){display:flex !important;align-items:flex-start;font-weight:400 !important;',
     'color:var(--body) !important;font-size:.88rem !important;margin-bottom:.9rem !important}',
     /* submit */
-    '__OT__ button:not(.ot-dd-btn),__OT__ input[type=submit],__OT__ input[type=button]{width:100% !important;',
+    '__OT__ button:not(.ot-dd-btn):not(.ot-opt),__OT__ input[type=submit],__OT__ input[type=button]{width:100% !important;',
     'background:var(--blue) !important;color:#fff !important;border:0 !important;border-radius:2px !important;',
     'padding:.9rem 1.7rem !important;font-weight:600 !important;font-size:.95rem !important;cursor:pointer;margin-top:.4rem !important}',
-    '__OT__ button:not(.ot-dd-btn):hover,__OT__ input[type=submit]:hover{background:var(--blue-mid) !important}',
+    '__OT__ button:not(.ot-dd-btn):not(.ot-opt):hover,__OT__ input[type=submit]:hover{background:var(--blue-mid) !important}',
+    /* the original control stays in the form, focusable, just not visible */
+    '__OT__ .ot-vhidden{position:absolute !important;opacity:0 !important;width:1px !important;height:1px !important;',
+    'margin:0 !important;padding:0 !important;border:0 !important;pointer-events:none;appearance:none !important}',
 
     /* 3. the dropdowns we build around the original inputs.
           The native <select> and the collapsible toggle are given the SAME
@@ -1296,11 +1420,11 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
         o.textContent = labelTextFor(r, scope) || ('Option ' + (i + 1));
         if (r.checked){ o.selected = true; ph.selected = false; }
         sel.appendChild(o);
-        // hide the original option row but keep it in the form
+        // hide the original option row but keep it in the form, in place
         var row = r;
         while (row.parentElement && row.parentElement !== container) row = row.parentElement;
-        if (row.parentElement === container) row.style.display = 'none';
-        else r.style.display = 'none';
+        if (row.parentElement === container) row.classList.add('ot-vhidden');
+        else r.classList.add('ot-vhidden');
         if (r.id){
           var lab = scope.querySelector('label[for="' + CSS.escape(r.id) + '"]');
           if (lab) lab.classList.add('ot-dd-hidden-label');
@@ -1326,18 +1450,94 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     });
   }
 
-  /* ---- checkbox group -> dropdown that mirrors the native select ----------
-     Multi-select fields (industry, newsletter channel) keep their checkboxes.
-     OneTrust's own option markup varies and collapses onto one line, so we
-     MOVE each real checkbox into a clean row we control. The inputs are never
-     replaced or renamed — they just sit in tidier wrappers inside the same
-     form, one per line, with a tick instead of a raw box. */
+  /* Frameworks (React/Angular) patch the value setter on form elements and
+     keep their own state, so assigning `el.value = x` is invisible to them and
+     the field submits empty. Setting through the NATIVE prototype setter and
+     then firing bubbling input/change events is what a real user action looks
+     like from the framework's point of view. */
+  function setNativeValue(el, value){
+    var proto = Object.getPrototypeOf(el);
+    var desc = Object.getOwnPropertyDescriptor(proto, 'value');
+    if (desc && desc.set) desc.set.call(el, value);
+    else el.value = value;
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  /* ---- native <select> -> the same custom dropdown ------------------------
+     The original <select> is NEVER moved or re-parented — OneTrust's own code
+     queries its DOM, so relocating controls broke the submitted values. It
+     stays exactly where it is, visually hidden, and our dropdown writes to it. */
+  function selectsToDropdowns(scope){
+    scope.querySelectorAll('select').forEach(function(sel){
+      if (sel.dataset.otDone || sel.multiple || sel.classList.contains('ot-vhidden')) return;
+      sel.dataset.otDone = '1';
+
+      var wrap  = document.createElement('div'); wrap.className = 'ot-dd';
+      var btn   = document.createElement('button');
+      btn.type = 'button'; btn.className = 'ot-dd-btn'; btn.setAttribute('aria-expanded', 'false');
+      var txt   = document.createElement('span'); btn.appendChild(txt);
+      var panel = document.createElement('div'); panel.className = 'ot-dd-panel';
+      var list  = document.createElement('div'); list.className = 'ot-opt-list';
+      panel.appendChild(list);
+      wrap.appendChild(btn); wrap.appendChild(panel);
+
+      // inserted as a SIBLING; the select keeps its parent and position
+      sel.parentNode.insertBefore(wrap, sel.nextSibling);
+      sel.classList.add('ot-vhidden');
+
+      var placeholder = 'Please select';
+      var rows = [];
+
+      Array.prototype.slice.call(sel.options).forEach(function(o){
+        var label = (o.textContent || '').replace(/\s+/g,' ').trim();
+        if (o.disabled || o.value === ''){ if (label) placeholder = label; return; }
+        var row  = document.createElement('div');
+        row.className = 'ot-opt'; row.setAttribute('role','option'); row.tabIndex = 0;
+        var tick = document.createElement('span'); tick.className = 'ot-tick'; tick.textContent = '✓';
+        var span = document.createElement('span'); span.className = 'ot-opt-text'; span.textContent = label;
+        row.appendChild(tick); row.appendChild(span);
+        function choose(){
+          setNativeValue(sel, o.value);
+          sync(); close();
+        }
+        row.addEventListener('click', choose);
+        row.addEventListener('keydown', function(e){
+          if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); choose(); }
+        });
+        rows.push({ row: row, value: o.value, label: label });
+        list.appendChild(row);
+      });
+
+      function sync(){
+        var hit = rows.filter(function(r){ return r.value === sel.value; })[0];
+        txt.textContent = hit ? hit.label : placeholder;
+        txt.style.color = hit ? 'var(--ink)' : 'var(--muted)';
+        rows.forEach(function(r){ r.row.classList.toggle('on', !!hit && r.value === sel.value); });
+      }
+      function close(){ wrap.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+
+      sync();
+      sel.addEventListener('change', sync);   // stays in step if OneTrust sets it itself
+      btn.addEventListener('click', function(){
+        var open = wrap.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', function(e){ if (!wrap.contains(e.target)) close(); });
+    });
+  }
+
+  /* ---- checkbox group -> dropdown ----------------------------------------
+     Same principle: the original group is left untouched in the DOM, only
+     hidden. Our rows are proxies — clicking one calls .click() on the real
+     checkbox in place, which is a genuine DOM click, so OneTrust's own
+     handlers fire and its state updates exactly as if the user clicked it. */
   function checkboxGroupsToDropdowns(scope){
     var groups = [];
     scope.querySelectorAll('input[type=checkbox]').forEach(function(c){
       if (c.dataset.otDone) return;
       var container = c.closest('fieldset') || c.parentElement;
-      if (!container) return;
+      if (!container || container.classList.contains('ot-vhidden')) return;
       if (container.querySelectorAll('input[type=checkbox]').length < 2) return;  // lone consent tick: leave alone
       if (groups.indexOf(container) === -1) groups.push(container);
     });
@@ -1352,16 +1552,15 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       var lbl   = document.createElement('span'); lbl.className = 'ot-field-label'; lbl.textContent = question;
       var btn   = document.createElement('button');
       btn.type = 'button'; btn.className = 'ot-dd-btn'; btn.setAttribute('aria-expanded', 'false');
-      var txt   = document.createElement('span');
-      btn.appendChild(txt);
+      var txt   = document.createElement('span'); btn.appendChild(txt);
       var panel = document.createElement('div'); panel.className = 'ot-dd-panel';
       var list  = document.createElement('div'); list.className = 'ot-opt-list';
-
-      container.parentNode.insertBefore(wrap, container);
-      wrap.appendChild(lbl); wrap.appendChild(btn); wrap.appendChild(panel);
-      panel.appendChild(container);            // keep the original group in the form
-      container.classList.add('ot-src-hidden'); // ...but out of sight
       panel.appendChild(list);
+      wrap.appendChild(lbl); wrap.appendChild(btn); wrap.appendChild(panel);
+
+      // sibling again — the group keeps its parent, it is only hidden
+      container.parentNode.insertBefore(wrap, container.nextSibling);
+      container.classList.add('ot-vhidden');
 
       function summarise(){
         var on = boxes.filter(function(c){ return c.checked; });
@@ -1373,17 +1572,22 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 
       boxes.forEach(function(c, i){
         c.dataset.otDone = '1';
-        var row  = document.createElement('label'); row.className = 'ot-opt';
+        var row  = document.createElement('div');
+        row.className = 'ot-opt'; row.setAttribute('role','option'); row.tabIndex = 0;
         var tick = document.createElement('span'); tick.className = 'ot-tick'; tick.textContent = '✓';
         var span = document.createElement('span'); span.className = 'ot-opt-text'; span.textContent = texts[i];
-        row.appendChild(tick);
-        row.appendChild(c);                     // the real input, moved
-        row.appendChild(span);
-        if (c.checked) row.classList.add('on');
+        row.appendChild(tick); row.appendChild(span);
+
+        function toggle(){ c.click(); }        // a real click on the real input
+        row.addEventListener('click', toggle);
+        row.addEventListener('keydown', function(e){
+          if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
+        });
         c.addEventListener('change', function(){
           row.classList.toggle('on', c.checked);
           summarise();
         });
+        row.classList.toggle('on', c.checked);
         list.appendChild(row);
       });
 
@@ -1434,7 +1638,9 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       if (el.shadowRoot) injectTheme(el.shadowRoot, ':host', styleId);
     });
     scopeLabelClicks(host);
-    try { radioGroupsToSelects(host); } catch(err){ console.warn('radio->select skipped:', err); }
+    if ((window.OT_CONFIG || {}).styleFormFields === false) return;  // colours only
+    try { radioGroupsToSelects(host); }      catch(err){ console.warn('radio->select skipped:', err); }
+    try { selectsToDropdowns(host); }        catch(err){ console.warn('select->dropdown skipped:', err); }
     try { checkboxGroupsToDropdowns(host); } catch(err){ console.warn('checkbox->dropdown skipped:', err); }
   }
 
@@ -1442,13 +1648,34 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     OT_HOSTS.forEach(function(id){ restyleForm(document.getElementById(id)); });
   }
 
+  /* The SDK paints its own markup before our transforms run, which showed as a
+     flash of OneTrust's formatting and a small layout jump. We hold the
+     container at opacity 0 from the first mutation until the first restyle
+     pass is done, then fade it in. Opacity doesn't affect layout, so the SDK
+     still sees a laid-out container. */
   OT_HOSTS.forEach(function(id){
     var host = document.getElementById(id);
     if (!host) return;
-    var t;
+    var t, hidden = false, revealed = false;
+
+    function reveal(){
+      if (revealed) return;
+      revealed = true;
+      requestAnimationFrame(function(){
+        host.style.transition = 'opacity .18s';
+        host.style.opacity = '1';
+      });
+    }
+
     new MutationObserver(function(){
-      clearTimeout(t); t = setTimeout(function(){ restyleForm(host); }, 120);
+      if (!host.children.length) return;
+      if (!hidden){ hidden = true; host.style.opacity = '0'; }
+      clearTimeout(t);
+      t = setTimeout(function(){ restyleForm(host); reveal(); }, 140);
     }).observe(host, { childList: true, subtree: true });
+
+    // safety net: never leave the form invisible if something goes wrong
+    setTimeout(function(){ if (hidden) reveal(); }, 4000);
   });
   window.addEventListener('OnetrustFormLoaded', function(){ setTimeout(restyleOneTrustForm, 150); });
 
