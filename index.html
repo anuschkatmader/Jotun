@@ -367,30 +367,10 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 .np-shot img{width:100%;height:100%;object-fit:cover}
 .np-shot::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,67,.15),rgba(20,16,67,.55))}
 .np-rule{height:5px;background:var(--yellow)}
+/* The OneTrust form's theme lives in OT_THEME_CSS in the script at the end of
+   this file. It's injected at runtime so the same rules can also be pushed
+   into a shadow root if OneTrust renders the form into one. */
 #ot-container{margin-top:1.4rem;min-height:60px}
-/* Neutralise OneTrust's own framing so the form sits on the page cleanly,
-   then re-style its fields to match the rest of the mockup. Generic element
-   selectors are used so they land without needing OneTrust's class names. */
-#ot-container form,#ot-container fieldset,#ot-container section{
-  border:0;padding:0;margin:0;background:transparent;box-shadow:none;
-}
-#ot-container label{
-  display:block;font-size:.86rem;font-weight:600;color:var(--blue);margin-bottom:.4rem;
-}
-#ot-container input[type=text],#ot-container input[type=email],
-#ot-container input[type=tel],#ot-container select,#ot-container textarea{
-  width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:2px;
-  font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;margin-bottom:1.1rem;
-}
-#ot-container input[type=checkbox],#ot-container input[type=radio]{
-  width:17px;height:17px;accent-color:var(--red);margin-right:.5rem;
-}
-#ot-container button,#ot-container input[type=submit]{
-  width:100%;background:var(--blue);color:#fff;border:0;border-radius:2px;
-  padding:.85rem 1.7rem;font-family:inherit;font-weight:600;font-size:.95rem;cursor:pointer;margin-top:.4rem;
-}
-#ot-container button:hover,#ot-container input[type=submit]:hover{background:var(--blue-mid)}
-#ot-container a{color:var(--blue);text-decoration:underline}
 .demo-note{
   font-size:.78rem;color:var(--muted);background:var(--tint);border-left:3px solid var(--yellow);
   padding:.55rem .75rem;margin-top:1.4rem;
@@ -1146,6 +1126,236 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
       }
     });
   })();
+
+  /* ==========================================================================
+     ONETRUST FORM — LOOK AND FEEL ONLY
+     Nothing below changes how the form works. The original inputs OneTrust
+     renders stay in the DOM, keep their names, ids, values and event handlers,
+     and submit exactly as before. We only:
+       1. strip OneTrust's own chrome (the dark box, borders, shadows)
+       2. repaint everything in Jotun's fonts and colours
+       3. collapse the option groups (industry / channel / frequency) into
+          dropdowns — the real radios and checkboxes are reused, not replaced
+     ========================================================================== */
+
+  /* __OT__ is swapped for "#ot-container" in the light DOM and ":host" if the
+     form turns out to be rendered inside a shadow root. */
+  var OT_THEME_CSS = [
+    '__OT__, __OT__ *{font-family:inherit !important;box-sizing:border-box}',
+    '__OT__{color:var(--body) !important;font-size:.95rem !important;line-height:1.6 !important}',
+
+    /* 1. strip the box: OneTrust's wrappers, panels, cards and rules */
+    '__OT__ div,__OT__ form,__OT__ section,__OT__ article,__OT__ main,__OT__ header,',
+    '__OT__ footer,__OT__ aside,__OT__ ul,__OT__ ol,__OT__ li,__OT__ table,__OT__ tbody,',
+    '__OT__ tr,__OT__ td,__OT__ th{background:transparent !important;background-color:transparent !important;',
+    'border:0 !important;box-shadow:none !important;border-radius:0 !important;color:inherit !important;max-width:100% !important}',
+    '__OT__ hr{display:none !important}',
+    '__OT__ fieldset{border:0 !important;background:transparent !important;padding:0 !important;margin:0 0 1.2rem !important;min-width:0 !important}',
+
+    /* 2. typography and fields in Jotun styling */
+    '__OT__ legend,__OT__ h1,__OT__ h2,__OT__ h3,__OT__ h4{color:var(--blue) !important;font-weight:600 !important;',
+    'font-size:1rem !important;letter-spacing:-.01em !important;padding:0 !important;margin:0 0 .5rem !important;float:none !important}',
+    '__OT__ p{color:var(--body) !important;font-size:.9rem !important;margin:0 0 .8rem !important}',
+    '__OT__ label{display:block;font-size:.86rem !important;font-weight:600 !important;color:var(--blue) !important;margin:0 0 .4rem !important}',
+    '__OT__ input[type=text],__OT__ input[type=email],__OT__ input[type=tel],__OT__ input[type=number],',
+    '__OT__ select,__OT__ textarea{width:100% !important;padding:.8rem .9rem !important;border:1px solid var(--line) !important;',
+    'border-radius:2px !important;background:#fff !important;color:var(--ink) !important;font-size:.95rem !important;margin:0 0 1.1rem !important}',
+    '__OT__ input:focus,__OT__ select:focus,__OT__ textarea:focus{outline:2px solid var(--focus);outline-offset:1px}',
+    '__OT__ input[type=checkbox],__OT__ input[type=radio]{width:17px !important;height:17px !important;',
+    'accent-color:var(--red) !important;margin:.15rem .55rem 0 0 !important;flex:none}',
+    '__OT__ a{color:var(--blue) !important;text-decoration:underline !important}',
+    /* consent line reads as body copy, not a field label */
+    '__OT__ label:has(input[type=checkbox]){display:flex !important;align-items:flex-start;font-weight:400 !important;',
+    'color:var(--body) !important;font-size:.88rem !important;margin-bottom:.9rem !important}',
+    /* submit */
+    '__OT__ button:not(.ot-dd-btn),__OT__ input[type=submit],__OT__ input[type=button]{width:100% !important;',
+    'background:var(--blue) !important;color:#fff !important;border:0 !important;border-radius:2px !important;',
+    'padding:.9rem 1.7rem !important;font-weight:600 !important;font-size:.95rem !important;cursor:pointer;margin-top:.4rem !important}',
+    '__OT__ button:not(.ot-dd-btn):hover,__OT__ input[type=submit]:hover{background:var(--blue-mid) !important}',
+
+    /* 3. the dropdowns we build around the original inputs */
+    '__OT__ .ot-dd{margin:0 0 1.1rem !important;position:relative}',
+    '__OT__ .ot-dd-btn{display:flex !important;align-items:center;justify-content:space-between;width:100% !important;',
+    'padding:.8rem .9rem !important;border:1px solid var(--line) !important;border-radius:2px !important;background:#fff !important;',
+    'color:var(--ink) !important;font-size:.95rem !important;font-weight:400 !important;text-align:left;margin:0 !important;cursor:pointer}',
+    '__OT__ .ot-dd-btn[aria-expanded="true"]{border-color:var(--blue) !important}',
+    '__OT__ .ot-dd-btn .ot-caret{border:solid var(--blue);border-width:0 2px 2px 0;padding:3px;transform:rotate(45deg);margin-left:.6rem;flex:none}',
+    '__OT__ .ot-dd-btn[aria-expanded="true"] .ot-caret{transform:rotate(-135deg)}',
+    '__OT__ .ot-dd-panel{display:none;position:absolute;z-index:5;left:0;right:0;top:calc(100% - 1px);',
+    'background:#fff !important;border:1px solid var(--blue) !important;padding:.6rem .9rem .3rem !important;max-height:230px;overflow:auto;',
+    'box-shadow:0 8px 20px rgba(20,16,67,.16) !important}',
+    '__OT__ .ot-dd.open .ot-dd-panel{display:block}',
+    '__OT__ .ot-dd-panel label{display:flex !important;align-items:flex-start;font-weight:400 !important;',
+    'color:var(--ink) !important;font-size:.92rem !important;margin:0 0 .6rem !important;cursor:pointer}',
+    '__OT__ .ot-dd-hidden-label{display:none !important}',
+    '__OT__ .ot-field-label{display:block;font-size:.86rem;font-weight:600;color:var(--blue);margin:0 0 .4rem}'
+  ].join('\n');
+
+  function injectTheme(root, token){
+    var id = 'ot-theme-style';
+    var target = (root === document) ? document.head : root;
+    if (!target || target.querySelector('#' + id)) return;
+    var s = document.createElement('style');
+    s.id = id;
+    s.textContent = OT_THEME_CSS.replace(/__OT__/g, token);
+    target.appendChild(s);
+  }
+  injectTheme(document, '#ot-container');
+
+  /* ---- helpers ------------------------------------------------------------ */
+  function labelTextFor(input, scope){
+    var l = input.id ? scope.querySelector('label[for="' + CSS.escape(input.id) + '"]') : null;
+    if (!l) l = input.closest('label');
+    var t = l ? l.textContent : (input.value || '');
+    return (t || '').replace(/\s+/g, ' ').trim();
+  }
+  function commonAncestor(nodes){
+    var a = nodes[0];
+    while (a && !nodes.every(function(n){ return a.contains(n); })) a = a.parentElement;
+    return a;
+  }
+  /* The question text sitting in the group container, e.g. "Preferred industry". */
+  function groupQuestion(container, inputs){
+    var cand = container.querySelector('legend, .ot-field-label');
+    if (cand) return cand.textContent.replace(/\s+/g,' ').trim();
+    var kids = Array.prototype.slice.call(container.childNodes);
+    for (var i = 0; i < kids.length; i++){
+      var k = kids[i];
+      if (k.nodeType === 1 && inputs.some(function(n){ return k.contains(n); })) continue;
+      var t = (k.textContent || '').replace(/\s+/g,' ').trim();
+      if (t) return t;
+    }
+    return '';
+  }
+
+  /* ---- radio group -> native <select> ------------------------------------- */
+  function radioGroupsToSelects(scope){
+    var byName = {};
+    scope.querySelectorAll('input[type=radio]').forEach(function(r){
+      if (!r.name || r.dataset.otDone) return;
+      (byName[r.name] = byName[r.name] || []).push(r);
+    });
+    Object.keys(byName).forEach(function(name){
+      var list = byName[name];
+      if (list.length < 2) return;
+      var container = commonAncestor(list);
+      if (!container) return;
+      var question = groupQuestion(container, list);
+
+      var sel = document.createElement('select');
+      sel.className = 'ot-select';
+      var ph = document.createElement('option');
+      ph.value = ''; ph.textContent = 'Please select'; ph.disabled = true; ph.selected = true;
+      sel.appendChild(ph);
+
+      list.forEach(function(r, i){
+        r.dataset.otDone = '1';
+        var o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = labelTextFor(r, scope) || ('Option ' + (i + 1));
+        if (r.checked){ o.selected = true; ph.selected = false; }
+        sel.appendChild(o);
+        // hide the original option row but keep it in the form
+        var row = r;
+        while (row.parentElement && row.parentElement !== container) row = row.parentElement;
+        if (row.parentElement === container) row.style.display = 'none';
+        else r.style.display = 'none';
+        if (r.id){
+          var lab = scope.querySelector('label[for="' + CSS.escape(r.id) + '"]');
+          if (lab) lab.classList.add('ot-dd-hidden-label');
+        }
+      });
+
+      // clicking the real radio is what OneTrust listens for
+      sel.addEventListener('change', function(){
+        var r = list[Number(sel.value)];
+        if (!r) return;
+        if (!r.checked) r.click();
+        r.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      if (question){
+        var lbl = document.createElement('span');
+        lbl.className = 'ot-field-label';
+        lbl.textContent = question;
+        container.appendChild(lbl);
+      }
+      container.appendChild(sel);
+    });
+  }
+
+  /* ---- checkbox group -> collapsible dropdown ----------------------------
+     Multi-select fields (e.g. newsletter channel) keep their checkboxes: the
+     original group node is MOVED inside a panel, so every listener survives. */
+  function checkboxGroupsToDropdowns(scope){
+    var groups = [];
+    scope.querySelectorAll('input[type=checkbox]').forEach(function(c){
+      if (c.dataset.otDone) return;
+      var container = c.closest('fieldset') || c.parentElement;
+      if (!container) return;
+      var peers = container.querySelectorAll('input[type=checkbox]');
+      if (peers.length < 2) return;                       // single consent tick: leave alone
+      if (groups.indexOf(container) === -1) groups.push(container);
+    });
+
+    groups.forEach(function(container){
+      var boxes = Array.prototype.slice.call(container.querySelectorAll('input[type=checkbox]'));
+      boxes.forEach(function(c){ c.dataset.otDone = '1'; });
+      var question = groupQuestion(container, boxes) || 'Select options';
+
+      var wrap  = document.createElement('div'); wrap.className = 'ot-dd';
+      var lbl   = document.createElement('span'); lbl.className = 'ot-field-label'; lbl.textContent = question;
+      var btn   = document.createElement('button');
+      btn.type = 'button'; btn.className = 'ot-dd-btn'; btn.setAttribute('aria-expanded', 'false');
+      var txt   = document.createElement('span');
+      var caret = document.createElement('span'); caret.className = 'ot-caret';
+      btn.appendChild(txt); btn.appendChild(caret);
+      var panel = document.createElement('div'); panel.className = 'ot-dd-panel';
+
+      container.parentNode.insertBefore(wrap, container);
+      wrap.appendChild(lbl); wrap.appendChild(btn); wrap.appendChild(panel);
+      panel.appendChild(container);                       // move the real group in, intact
+
+      function summarise(){
+        var on = boxes.filter(function(c){ return c.checked; });
+        txt.textContent = on.length === 0 ? 'Please select'
+                        : on.length === 1 ? labelTextFor(on[0], scope)
+                        : on.length + ' selected';
+        txt.style.color = on.length ? 'var(--ink)' : 'var(--muted)';
+      }
+      summarise();
+      boxes.forEach(function(c){ c.addEventListener('change', summarise); });
+      btn.addEventListener('click', function(){
+        var open = wrap.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', function(e){
+        if (!wrap.contains(e.target)){ wrap.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+      });
+    });
+  }
+
+  /* ---- run once the form exists, and again if OneTrust re-renders --------- */
+  function restyleOneTrustForm(){
+    var host = document.getElementById('ot-container');
+    if (!host || !host.children.length) return;
+    // if the form landed in a shadow root, push the same theme in there
+    host.querySelectorAll('*').forEach(function(el){
+      if (el.shadowRoot) injectTheme(el.shadowRoot, ':host');
+    });
+    try { radioGroupsToSelects(host); } catch(err){ console.warn('radio->select skipped:', err); }
+    try { checkboxGroupsToDropdowns(host); } catch(err){ console.warn('checkbox->dropdown skipped:', err); }
+  }
+
+  (function(){
+    var host = document.getElementById('ot-container');
+    if (!host) return;
+    var t;
+    new MutationObserver(function(){
+      clearTimeout(t); t = setTimeout(restyleOneTrustForm, 120);
+    }).observe(host, { childList: true, subtree: true });
+  })();
+  window.addEventListener('OnetrustFormLoaded', function(){ setTimeout(restyleOneTrustForm, 150); });
 
   /* Optional: hosted preference centre on the account page. */
   (function(){
