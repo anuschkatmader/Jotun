@@ -64,13 +64,20 @@
     // from this page.
     prefCentreUrl:  "https://privacyportaltrial.onetrust.com/ui/#/preferences/multipage/login/8379de65-2015-418f-ba60-09e6949169eb",
 
-    // FIELD TRANSFORMS — off by default.
-    // false = OneTrust's own controls handle every interaction, so values are
-    //         recorded exactly as OneTrust expects. Colours, fonts, spacing and
-    //         the stripped box all still apply.
-    // true  = additionally replaces the option groups with custom dropdowns.
-    //         Only switch this on once it's been verified end to end against a
-    //         real submission in the tenant.
+    // ---- TROUBLESHOOTING SWITCHES ----------------------------------------
+    // If a field stops recording in OneTrust, work down this ladder:
+    //
+    //   themeForm: false, styleFormFields: false
+    //     -> the form is 100% OneTrust. Zero CSS and zero JS from this page
+    //        touch it. If it STILL fails here, the cause is in the collection
+    //        point configuration, not in this mockup.
+    //
+    //   themeForm: true, styleFormFields: false   (current)
+    //     -> Jotun colours, fonts and spacing. No control is modified.
+    //
+    //   themeForm: true, styleFormFields: true
+    //     -> additionally swaps the option groups for custom dropdowns.
+    themeForm:       true,
     styleFormFields: false
   };
 
@@ -1328,7 +1335,9 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     s.textContent = OT_THEME_CSS.replace(/__OT__/g, token);
     target.appendChild(s);
   }
-  injectTheme(document, '#ot-container',        'ot-theme-style');
+  if ((window.OT_CONFIG || {}).themeForm !== false){
+    injectTheme(document, '#ot-container', 'ot-theme-style');
+  }
 
   /* ---- helpers ------------------------------------------------------------ */
   function labelTextFor(input, scope){
@@ -1566,43 +1575,21 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     });
   }
 
-  /* ---- duplicate-id guard ------------------------------------------------
-     Both containers render the SAME collection point, so field ids appear
-     twice on the page. That's harmless for submission (the browser posts by
-     name), but a native <label for="..."> click resolves to the FIRST match
-     in the document — which would toggle the pop-up's checkbox from the
-     inline form. We intercept those clicks and activate the local input
-     instead. Nothing is renamed, so OneTrust's own handlers are untouched. */
-  function scopeLabelClicks(host){
-    if (host.dataset.otScoped) return;
-    host.dataset.otScoped = '1';
-    host.addEventListener('click', function(e){
-      var lab = e.target.closest('label[for]');
-      if (!lab || !host.contains(lab)) return;
-      var id = lab.getAttribute('for');
-      if (!id) return;
-      var local  = host.querySelector('[id="' + id.replace(/"/g,'\\"') + '"]');
-      var global = document.getElementById(id);
-      if (local && global !== local){
-        e.preventDefault();
-        local.click();
-      }
-    }, true);
-  }
-
   var OT_HOSTS = ['ot-container'];
 
   /* ---- run once the form exists, and again if OneTrust re-renders --------- */
   function restyleForm(host){
     if (!host || !host.children.length) return;
-    var themeToken = '#' + host.id;
     var styleId = 'ot-theme-' + host.id;
     // if the form landed in a shadow root, push the same theme in there
-    host.querySelectorAll('*').forEach(function(el){
-      if (el.shadowRoot) injectTheme(el.shadowRoot, ':host', styleId);
-    });
-    scopeLabelClicks(host);
-    if ((window.OT_CONFIG || {}).styleFormFields === false) return;  // colours only
+    if ((window.OT_CONFIG || {}).themeForm !== false){
+      host.querySelectorAll('*').forEach(function(el){
+        if (el.shadowRoot) injectTheme(el.shadowRoot, ':host', styleId);
+      });
+    }
+    // Below this line we MODIFY OneTrust's controls. With styleFormFields off,
+    // nothing here runs and the form is left entirely alone.
+    if ((window.OT_CONFIG || {}).styleFormFields !== true) return;
     try { radioGroupsToSelects(host); }      catch(err){ console.warn('radio->select skipped:', err); }
     try { selectsToDropdowns(host); }        catch(err){ console.warn('select->dropdown skipped:', err); }
     try { checkboxGroupsToDropdowns(host); } catch(err){ console.warn('checkbox->dropdown skipped:', err); }
@@ -1659,9 +1646,3 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 </body>
 </html>
 
-Anuschka Theresa Mader
-Senior Solutions Engineer
-anuschka.mader@onetrust.com
-+34 603 600 677 
-OneTrust.com 
-Pl. Pablo Ruiz Picasso 11, 28020 Madrid, Spain 
