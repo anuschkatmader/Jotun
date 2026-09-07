@@ -64,10 +64,14 @@
     // from this page.
     prefCentreUrl:  "https://privacyportaltrial.onetrust.com/ui/#/preferences/multipage/login/8379de65-2015-418f-ba60-09e6949169eb",
 
-    // Set to false to turn OFF the custom dropdowns and fall back to OneTrust's
-    // own field controls. Colours and fonts still apply. Use this if a field
-    // ever stops submitting correctly — it's an instant safety valve mid-demo.
-    styleFormFields: true
+    // FIELD TRANSFORMS — off by default.
+    // false = OneTrust's own controls handle every interaction, so values are
+    //         recorded exactly as OneTrust expects. Colours, fonts, spacing and
+    //         the stripped box all still apply.
+    // true  = additionally replaces the option groups with custom dropdowns.
+    //         Only switch this on once it's been verified end to end against a
+    //         real submission in the tenant.
+    styleFormFields: false
   };
 
   /* OtSdk queue stub — must sit BEFORE the OtFormStub script. */
@@ -603,16 +607,14 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
         <p style="margin-top:1rem">Industry updates, technical insight and product news — sent to your inbox and tailored to the sectors you work in.</p>
       </div>
       <div>
-        <!-- ==================================================================
-             ONETRUST EMBEDDED WEB FORM — second instance of the SAME
-             "Newsletter Pop-Up" collection point (b90a1a08-...).
-             This is the on-page fallback for anyone who dismissed the pop-up.
-             Identical integration, just themed for the blue band.
-             ================================================================== -->
-        <div id="ot-container-inline"></div>
-        <div id="otInlineFallback" style="display:none;font-size:.85rem;color:#DEDCEC">
-          The sign-up form could not load. Please try again shortly.
-        </div>
+        <!-- The form is mounted ONCE per page, in the pop-up. The OneTrust SDK
+             re-renders on every InstallCP call, so a second instance here made
+             it rebuild in a loop and drop the user's selections. This band now
+             reopens the same pop-up instead — one mount, no conflict. -->
+        <p style="font-size:.95rem;margin-bottom:1.6rem">Sign up in a few seconds. Choose your
+          industry, how you'd like to hear from us and how often — and change or withdraw it
+          whenever you like from My Jotun.</p>
+        <button class="btn btn-yellow" onclick="openNewsletter()">Sign up for Jotun Insider</button>
       </div>
     </div>
   </section>
@@ -1131,30 +1133,34 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
   function installWebform(targetId, canInstall, onFail){
     var cp = CFG.webformCpId;
     if (!cp) return;
-    var st = otState[targetId] = otState[targetId] || { poller: null, last: 0, tries: 0 };
-    if (st.poller || otRendered(targetId)) return;
+    var st = otState[targetId] = otState[targetId] || { poller: null, done: false, tries: 0 };
+    if (st.poller || st.done || otRendered(targetId)) return;
     st.tries = 0;
     st.poller = setInterval(function(){
       st.tries++;
       if (otRendered(targetId)){
-        clearInterval(st.poller); st.poller = null;
+        clearInterval(st.poller); st.poller = null; st.done = true;   // install exactly once
         return;
       }
       if (canInstall() && otReady()){
-        var now = Date.now();
-        if (now - st.last >= 1500){
-          st.last = now;
-          try { OneTrust.webform.InstallCP(cp, { target: "#" + targetId }); }
-          catch(err){ console.warn('OneTrust InstallCP failed for #' + targetId + ':', err); }
-        }
+        clearInterval(st.poller); st.poller = null;
+        st.done = true;
+        try { OneTrust.webform.InstallCP(cp, { target: "#" + targetId }); }
+        catch(err){ console.warn('OneTrust InstallCP failed for #' + targetId + ':', err); }
+        // give it a moment, and only report a problem if nothing appeared
+        setTimeout(function(){
+          if (!otRendered(targetId)){
+            console.warn('OneTrust web form did not render into #' + targetId +
+                         ' — check the collection point is published and this domain is authorised.');
+            if (onFail) onFail();
+          }
+        }, 6000);
+        return;
       }
       if (st.tries > 60){
         clearInterval(st.poller); st.poller = null;
-        if (!otRendered(targetId)){
-          console.warn('OneTrust web form did not render into #' + targetId +
-                       ' — check the collection point is published and this domain is authorised.');
-          if (onFail) onFail();
-        }
+        console.warn('OneTrust SDK never became ready for #' + targetId);
+        if (onFail) onFail();
       }
     }, 300);
   }
@@ -1166,31 +1172,9 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     });
   }
 
-  /* 2) Inline copy in the "Subscribe to Jotun Insider" band — the on-page
-        route for anyone who dismissed the pop-up. Installed as soon as the
-        home view is on screen (offsetParent is null while it's hidden). */
-  (function(){
-    function inlineVisible(){
-      var el = document.getElementById('ot-container-inline');
-      return !!(el && el.offsetParent !== null);
-    }
-    function go(){
-      installWebform('ot-container-inline', inlineVisible, function(){
-        var fb = document.getElementById('otInlineFallback'); if (fb) fb.style.display = 'block';
-      });
-    }
-    window.addEventListener('load', function(){ setTimeout(go, 400); });
-    // re-attempt if the person was on the account view when the page settled
-    document.querySelectorAll('[data-view="home"]').forEach(function(el){
-      el.addEventListener('click', function(){ setTimeout(go, 300); });
-    });
-  })();
-
   window.addEventListener('OnetrustFormLoaded', function(e){
     console.log('OnetrustFormLoaded', e.detail);
-    ['otFallback','otInlineFallback'].forEach(function(id){
-      var fb = document.getElementById(id); if (fb) fb.style.display = 'none';
-    });
+    var fb = document.getElementById('otFallback'); if (fb) fb.style.display = 'none';
   });
   window.addEventListener('OneTrustWebFormSubmitted', function(){
     showToast('Subscribed — your consent has been recorded');
@@ -1205,7 +1189,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
      watch for a click on the form's OWN submit control. Anything we injected
      (the dropdown toggles and their panels) is explicitly excluded. */
   (function(){
-    ['ot-container','ot-container-inline'].forEach(function(id){
+    ['ot-container'].forEach(function(id){
       var c = document.getElementById(id);
       if (!c) return;
       c.addEventListener('click', function(e){
@@ -1324,6 +1308,14 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     '__OT__ .ot-opt.on .ot-opt-text{font-weight:600 !important}',
     '__OT__ .ot-opt:focus-within{background:var(--tint) !important;outline:2px solid var(--focus);outline-offset:-2px}',
     '__OT__ .ot-dd-hidden-label{display:none !important}',
+    /* Native option groups (transforms off): force one option per line, since
+       OneTrust's own markup collapses them onto a single row here. */
+    '__OT__ fieldset > label,__OT__ fieldset > div,',
+    '__OT__ label:has(> input[type=checkbox]),__OT__ label:has(> input[type=radio]),',
+    '__OT__ div:has(> input[type=checkbox]),__OT__ div:has(> input[type=radio]){',
+    'display:flex !important;align-items:center;gap:.5rem;width:100% !important;',
+    'font-weight:400 !important;color:var(--ink) !important;font-size:.93rem !important;margin:0 0 .55rem !important}',
+    '__OT__ fieldset > legend{display:block !important;width:100% !important}',
     '__OT__ .ot-field-label{display:block !important;font-size:.86rem !important;font-weight:600 !important;',
     'color:var(--blue) !important;margin:0 0 .4rem !important;padding:0 !important}'
   ].join('\n');
@@ -1337,34 +1329,6 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     target.appendChild(s);
   }
   injectTheme(document, '#ot-container',        'ot-theme-style');
-  injectTheme(document, '#ot-container-inline', 'ot-theme-style-inline');
-
-  /* The inline copy sits on the blue band, so its text flips to white and the
-     submit picks up Jotun yellow. The dropdown panel stays white-on-dark-text.
-     Injected after the base theme so these win on equal specificity. */
-  (function(){
-    var s = document.createElement('style');
-    s.id = 'ot-theme-onblue';
-    s.textContent = [
-      '#ot-container-inline{margin-top:0}',
-      '#ot-container-inline,#ot-container-inline p{color:#DEDCEC !important}',
-      '#ot-container-inline label,#ot-container-inline legend,#ot-container-inline .ot-field-label,',
-      '#ot-container-inline h1,#ot-container-inline h2,#ot-container-inline h3,#ot-container-inline h4{color:#fff !important}',
-      '#ot-container-inline a{color:#fff !important}',
-      '#ot-container-inline label:has(input[type=checkbox]){color:#DEDCEC !important}',
-      '#ot-container-inline input[type=checkbox],#ot-container-inline input[type=radio]{accent-color:var(--yellow) !important}',
-      '#ot-container-inline button:not(.ot-dd-btn),#ot-container-inline input[type=submit],',
-      '#ot-container-inline input[type=button]{background:var(--yellow) !important;color:var(--blue) !important}',
-      '#ot-container-inline button:not(.ot-dd-btn):hover,#ot-container-inline input[type=submit]:hover{background:#F5C955 !important}',
-      '#ot-container-inline .ot-dd-btn{color:var(--ink) !important}',
-      /* panel is a white sheet, so its contents stay dark */
-      '#ot-container-inline .ot-dd-panel *{color:var(--ink) !important}',
-      '#ot-container-inline .ot-dd-panel label{color:var(--ink) !important}',
-      '#ot-container-inline .ot-dd-panel input[type=checkbox],',
-      '#ot-container-inline .ot-dd-panel input[type=radio]{accent-color:var(--red) !important}'
-    ].join('\n');
-    document.head.appendChild(s);
-  })();
 
   /* ---- helpers ------------------------------------------------------------ */
   function labelTextFor(input, scope){
@@ -1626,7 +1590,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     }, true);
   }
 
-  var OT_HOSTS = ['ot-container', 'ot-container-inline'];
+  var OT_HOSTS = ['ot-container'];
 
   /* ---- run once the form exists, and again if OneTrust re-renders --------- */
   function restyleForm(host){
@@ -1694,3 +1658,10 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 </script>
 </body>
 </html>
+
+Anuschka Theresa Mader
+Senior Solutions Engineer
+anuschka.mader@onetrust.com
++34 603 600 677 
+OneTrust.com 
+Pl. Pablo Ruiz Picasso 11, 28020 Madrid, Spain 
