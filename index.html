@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,9 +41,11 @@
           It is installed WHEN THE POP-UP OPENS (container visible & laid out) —
           the SDK will not render into a hidden / opacity:0 container.
 
-       3) PREFERENCE CENTRE (account page)
-          Optional embed slot: <div id="ot-pref-center"> on the
-          "Communication preferences" tab. Set OT_CONFIG.prefCenterCpId.
+       3) PREFERENCE CENTRE (My Jotun > Privacy and preferences)
+          The hosted, multipage login preference centre, embedded as an iframe
+          from OT_CONFIG.prefCentreUrl. Because it's cross-origin, its INTERNAL
+          styling can only be changed in OneTrust's own branding settings.
+          Everything around the frame is styled here.
      ----------------------------------------------------------------------------- -->
 
 <script>
@@ -55,7 +58,28 @@
     // Taken from the production button trigger id, with the leading "ot-" removed:
     //   id="ot-b90a1a08-78df-4be5-ac3d-2721a404430d"  ->  b90a1a08-...
     webformCpId:    "b90a1a08-78df-4be5-ac3d-2721a404430d",
-    prefCenterCpId: ""    // Optional: Collection Point id for the account preference centre
+
+    // Hosted preference centre (multipage, login). Rendered as an iframe on the
+    // "Privacy and preferences" tab of My Jotun. Its internal look is set in
+    // OneTrust's own branding settings — a cross-origin frame can't be styled
+    // from this page.
+    prefCentreUrl:  "https://privacyportaltrial.onetrust.com/ui/#/preferences/multipage/login/8379de65-2015-418f-ba60-09e6949169eb",
+
+    // ---- TROUBLESHOOTING SWITCHES ----------------------------------------
+    // If a field stops recording in OneTrust, work down this ladder:
+    //
+    //   themeForm: false, styleFormFields: false
+    //     -> the form is 100% OneTrust. Zero CSS and zero JS from this page
+    //        touch it. If it STILL fails here, the cause is in the collection
+    //        point configuration, not in this mockup.
+    //
+    //   themeForm: true, styleFormFields: false   (current)
+    //     -> Jotun colours, fonts and spacing. No control is modified.
+    //
+    //   themeForm: true, styleFormFields: true
+    //     -> additionally swaps the option groups for custom dropdowns.
+    themeForm:       true,
+    styleFormFields: false
   };
 
   /* OtSdk queue stub — must sit BEFORE the OtFormStub script. */
@@ -331,11 +355,13 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
    MODALS — cookie banner + newsletter pop-up
    ========================================================================== */
 .overlay{
-  position:fixed;inset:0;background:rgba(20,16,67,.6);z-index:200;
+  position:fixed;inset:0;background:rgba(20,16,67,.6);z-index:9000;
   display:flex;align-items:center;justify-content:center;padding:24px;
-  visibility:hidden;opacity:0;transition:opacity .2s;
+  visibility:hidden;opacity:0;pointer-events:none;transition:opacity .2s;
 }
-.overlay.show{visibility:visible;opacity:1}
+.overlay.show{visibility:visible;opacity:1;pointer-events:auto}
+/* The cookie banner always sits above the newsletter pop-up. */
+#cookieModal{z-index:9100}
 .modal{
   background:#fff;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
   box-shadow:0 24px 60px rgba(20,16,67,.4);position:relative;
@@ -345,11 +371,15 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 .modal p{font-size:.94rem}
 .modal .logo{margin-bottom:1.3rem}
 .modal .logo img,.modal .logo svg{height:42px}
+/* z-index keeps the X above the pop-up's header image, which is a positioned
+   element later in the DOM and was painting over it. */
 .modal-close{
-  position:absolute;top:12px;right:12px;background:rgba(255,255,255,.9);border:0;padding:.45rem;
+  position:absolute;top:12px;right:12px;z-index:10;background:none;border:0;padding:.45rem;
   color:var(--blue);line-height:0;border-radius:50%;
 }
-.modal-close:hover{background:#fff}
+.modal-close:hover{background:var(--tint)}
+.modal-close.on-image{background:rgba(255,255,255,.92)}
+.modal-close.on-image:hover{background:#fff}
 .modal-close svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
 .cookie-actions{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.6rem}
 .cookie-actions .btn{flex:1 1 auto;min-width:150px}
@@ -367,30 +397,21 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 .np-shot img{width:100%;height:100%;object-fit:cover}
 .np-shot::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,67,.15),rgba(20,16,67,.55))}
 .np-rule{height:5px;background:var(--yellow)}
+/* OneTrust hosted preference centre frame. Only the surround is ours —
+   the frame's contents are branded in OneTrust itself. */
+.ot-frame{position:relative;background:#fff;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-top:.6rem}
+.ot-frame iframe{display:block;width:100%;height:880px;border:0;background:#fff}
+@media(max-width:700px){.ot-frame iframe{height:720px}}
+.ot-frame .ot-frame-loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:#fff;color:var(--muted);font-size:.9rem;
+}
+.ot-frame.loaded .ot-frame-loading{display:none}
+
+/* The OneTrust form's theme lives in OT_THEME_CSS in the script at the end of
+   this file. It's injected at runtime so the same rules can also be pushed
+   into a shadow root if OneTrust renders the form into one. */
 #ot-container{margin-top:1.4rem;min-height:60px}
-/* Neutralise OneTrust's own framing so the form sits on the page cleanly,
-   then re-style its fields to match the rest of the mockup. Generic element
-   selectors are used so they land without needing OneTrust's class names. */
-#ot-container form,#ot-container fieldset,#ot-container section{
-  border:0;padding:0;margin:0;background:transparent;box-shadow:none;
-}
-#ot-container label{
-  display:block;font-size:.86rem;font-weight:600;color:var(--blue);margin-bottom:.4rem;
-}
-#ot-container input[type=text],#ot-container input[type=email],
-#ot-container input[type=tel],#ot-container select,#ot-container textarea{
-  width:100%;padding:.8rem .9rem;border:1px solid var(--line);border-radius:2px;
-  font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;margin-bottom:1.1rem;
-}
-#ot-container input[type=checkbox],#ot-container input[type=radio]{
-  width:17px;height:17px;accent-color:var(--red);margin-right:.5rem;
-}
-#ot-container button,#ot-container input[type=submit]{
-  width:100%;background:var(--blue);color:#fff;border:0;border-radius:2px;
-  padding:.85rem 1.7rem;font-family:inherit;font-weight:600;font-size:.95rem;cursor:pointer;margin-top:.4rem;
-}
-#ot-container button:hover,#ot-container input[type=submit]:hover{background:var(--blue-mid)}
-#ot-container a{color:var(--blue);text-decoration:underline}
 .demo-note{
   font-size:.78rem;color:var(--muted);background:var(--tint);border-left:3px solid var(--yellow);
   padding:.55rem .75rem;margin-top:1.4rem;
@@ -404,15 +425,6 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* Demo control strip — for re-triggering pop-ups live in front of the customer.
-   Delete this block (and .demobar in the HTML) for a clean hand-off. */
-.demobar{
-  position:fixed;right:16px;bottom:16px;z-index:150;background:#fff;border:1px solid var(--line);
-  box-shadow:0 6px 20px rgba(20,16,67,.16);padding:.7rem .8rem;font-size:.82rem;display:flex;gap:.8rem;align-items:center;
-}
-.demobar strong{color:var(--red);font-size:.74rem;letter-spacing:.05em}
-.demobar button{background:none;border:0;color:var(--blue);text-decoration:underline;padding:0;font-size:.82rem}
-@media(max-width:620px){.demobar{display:none}}
 </style>
 </head>
 <body>
@@ -603,19 +615,14 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
         <p style="margin-top:1rem">Industry updates, technical insight and product news — sent to your inbox and tailored to the sectors you work in.</p>
       </div>
       <div>
-        <div class="field"><label for="inName">Name</label><input id="inName" type="text" placeholder="Your full name"></div>
-        <div class="field"><label for="inMail">E-mail</label><input id="inMail" type="email" placeholder="you@company.com"></div>
-        <div class="field"><label for="inInd">Industry</label>
-          <select id="inInd">
-            <option>Choose your preferred industry</option>
-            <option>Shipping</option><option>Energy</option>
-            <option>Architecture and design</option><option>Infrastructure</option><option>Light industry</option>
-          </select>
-        </div>
-        <label class="consent-row"><input type="checkbox">
-          <span>I consent to my e-mail address being used in accordance with the <a href="#privacy">privacy policy</a>.</span>
-        </label>
-        <button class="btn btn-yellow" onclick="showToast('Subscription preferences saved')">Subscribe</button>
+        <!-- The form is mounted ONCE per page, in the pop-up. The OneTrust SDK
+             re-renders on every InstallCP call, so a second instance here made
+             it rebuild in a loop and drop the user's selections. This band now
+             reopens the same pop-up instead — one mount, no conflict. -->
+        <p style="font-size:.95rem;margin-bottom:1.6rem">Sign up in a few seconds. Choose your
+          industry, how you'd like to hear from us and how often — and change or withdraw it
+          whenever you like from My Jotun.</p>
+        <button class="btn btn-yellow" onclick="openNewsletter()">Sign up for Jotun Insider</button>
       </div>
     </div>
   </section>
@@ -641,7 +648,8 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     <ul class="acct-nav">
       <li><button data-panel="overview" aria-current="true">Overview</button></li>
       <li><button data-panel="details">My details</button></li>
-      <li><button data-panel="prefs">Communication preferences</button></li>
+      <li><button data-panel="prefs">Privacy and preferences</button></li>
+      <li><button data-panel="comms">Communication preferences</button></li>
       <li><button data-panel="favourites">Favourites</button></li>
       <li><button data-panel="documents">Technical documents</button></li>
       <li><button data-panel="privacy">Privacy and data</button></li>
@@ -660,7 +668,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
             <dt>Preferences last updated</dt><dd>6 September 2026</dd>
           </dl>
           <div class="actions">
-            <button class="btn btn-primary btn-sm" data-goto="prefs">Manage communication preferences</button>
+            <button class="btn btn-primary btn-sm" data-goto="prefs">Manage privacy and preferences</button>
           </div>
         </div>
       </section>
@@ -681,126 +689,141 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
         </div>
       </section>
 
-      <!-- ---------- Communication preferences (UCPM focus) ---------- -->
+      <!-- ---------- Privacy and preferences (OneTrust preference centre) ---------- -->
       <section class="panel" id="panel-prefs">
+        <div class="card">
+          <h2>Your privacy and preferences</h2>
+          <p class="lede">Choose what Jotun sends you and how we may contact you. Your choices apply
+            across every Jotun site, app and local office, and you can change or withdraw them at any time.</p>
 
-        <!-- OPTIONAL: OneTrust hosted Preference Centre embeds here when
-             OT_CONFIG.prefCenterCpId is set. The demo panels below hide themselves. -->
-        <div id="ot-pref-center"></div>
-
-        <div id="demoPrefs">
-          <div class="card">
-            <h2>What you hear from us</h2>
-            <p class="lede">Choose the purposes you are happy for Jotun to contact you about. You can change or withdraw any of these at any time — your choices apply across every Jotun site, app and local office.</p>
-
-            <div class="purpose">
-              <div class="txt">
-                <span class="name">Jotun Insider newsletter</span>
-                <p class="desc">Industry updates, technical insight and case studies from the sectors you select below.</p>
-                <span class="meta">Opted in 12 March 2024 · Jotun Insider sign-up form</span>
-              </div>
-              <span class="toggle"><input type="checkbox" checked aria-label="Jotun Insider newsletter"><span class="track"></span><span class="thumb"></span></span>
-            </div>
-
-            <div class="purpose">
-              <div class="txt">
-                <span class="name">Product and coating updates</span>
-                <p class="desc">New products, reformulations, and changes to specifications or datasheets that affect the systems you use.</p>
-                <span class="meta">Opted in 12 March 2024 · Jotun Insider sign-up form</span>
-              </div>
-              <span class="toggle"><input type="checkbox" checked aria-label="Product and coating updates"><span class="track"></span><span class="thumb"></span></span>
-            </div>
-
-            <div class="purpose">
-              <div class="txt">
-                <span class="name">Events, webinars and trade fairs</span>
-                <p class="desc">Invitations to Jotun technical sessions, customer days and the industry events we attend.</p>
-                <span class="meta">Not set</span>
-              </div>
-              <span class="toggle"><input type="checkbox" aria-label="Events, webinars and trade fairs"><span class="track"></span><span class="thumb"></span></span>
-            </div>
-
-            <div class="purpose">
-              <div class="txt">
-                <span class="name">Offers from your local Jotun company</span>
-                <p class="desc">Pricing, campaigns and dealer promotions from the Jotun company operating in your country.</p>
-                <span class="meta">Opted out 4 July 2026 · Preference centre</span>
-              </div>
-              <span class="toggle"><input type="checkbox" aria-label="Offers from your local Jotun company"><span class="track"></span><span class="thumb"></span></span>
-            </div>
-
-            <div class="purpose">
-              <div class="txt">
-                <span class="name">Research and product feedback</span>
-                <p class="desc">Occasional surveys and interview requests that help us improve our coatings and services.</p>
-                <span class="meta">Not set</span>
-              </div>
-              <span class="toggle"><input type="checkbox" aria-label="Research and product feedback"><span class="track"></span><span class="thumb"></span></span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>How we reach you</h2>
-            <p class="lede">Pick a channel for each purpose. Leaving a channel unticked stops that type of message on that channel only.</p>
-            <div class="matrix-scroll">
-              <table class="matrix">
-                <thead><tr><th scope="col">Purpose</th><th scope="col">E-mail</th><th scope="col">Phone</th><th scope="col">SMS</th><th scope="col">Post</th><th scope="col">In person</th></tr></thead>
-                <tbody>
-                  <tr><td>Jotun Insider newsletter</td>
-                    <td><input type="checkbox" checked aria-label="Newsletter by e-mail"></td><td><input type="checkbox" aria-label="Newsletter by phone"></td>
-                    <td><input type="checkbox" aria-label="Newsletter by SMS"></td><td><input type="checkbox" aria-label="Newsletter by post"></td><td><input type="checkbox" aria-label="Newsletter in person"></td></tr>
-                  <tr><td>Product and coating updates</td>
-                    <td><input type="checkbox" checked aria-label="Product updates by e-mail"></td><td><input type="checkbox" checked aria-label="Product updates by phone"></td>
-                    <td><input type="checkbox" aria-label="Product updates by SMS"></td><td><input type="checkbox" aria-label="Product updates by post"></td><td><input type="checkbox" checked aria-label="Product updates in person"></td></tr>
-                  <tr><td>Events, webinars and trade fairs</td>
-                    <td><input type="checkbox" aria-label="Events by e-mail"></td><td><input type="checkbox" aria-label="Events by phone"></td>
-                    <td><input type="checkbox" aria-label="Events by SMS"></td><td><input type="checkbox" aria-label="Events by post"></td><td><input type="checkbox" aria-label="Events in person"></td></tr>
-                  <tr><td>Offers from your local Jotun company</td>
-                    <td><input type="checkbox" aria-label="Offers by e-mail"></td><td><input type="checkbox" aria-label="Offers by phone"></td>
-                    <td><input type="checkbox" aria-label="Offers by SMS"></td><td><input type="checkbox" aria-label="Offers by post"></td><td><input type="checkbox" aria-label="Offers in person"></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Topics you care about</h2>
-            <p class="lede">We use these to decide what goes into your Jotun Insider edition.</p>
-            <div class="chips" id="topicChips">
-              <button class="chip" aria-pressed="true">Shipping and hull performance</button>
-              <button class="chip" aria-pressed="true">Energy and offshore</button>
-              <button class="chip" aria-pressed="false">Architecture and design</button>
-              <button class="chip" aria-pressed="false">Infrastructure</button>
-              <button class="chip" aria-pressed="false">Light industry and powder</button>
-              <button class="chip" aria-pressed="false">Decorative and colour trends</button>
-              <button class="chip" aria-pressed="true">Sustainability and regulation</button>
-            </div>
-
-            <h3 style="margin:2.2rem 0 .9rem">How often</h3>
-            <div class="radio-row">
-              <label><input type="radio" name="freq"> Weekly</label>
-              <label><input type="radio" name="freq" checked> Monthly</label>
-              <label><input type="radio" name="freq"> Quarterly</label>
-              <label><input type="radio" name="freq"> Only important updates</label>
-            </div>
-
-            <h3 style="margin:2.2rem 0 .9rem">Preferred language</h3>
-            <div class="radio-row">
-              <label><input type="radio" name="lang" checked> English</label>
-              <label><input type="radio" name="lang"> Norsk</label>
-              <label><input type="radio" name="lang"> Deutsch</label>
-              <label><input type="radio" name="lang"> Nederlands</label>
-            </div>
-
-            <div class="actions">
-              <button class="btn btn-primary" onclick="showToast('Preferences saved across all Jotun channels')">Save preferences</button>
-              <button class="danger" onclick="withdrawAll()">Withdraw all consent</button>
-            </div>
+          <!-- ==================================================================
+               ONETRUST PREFERENCE CENTRE (hosted, multipage, login)
+               Delivered as an iframe, so its INTERNAL styling is controlled in
+               OneTrust (Preference Centre > Branding / custom CSS), not here —
+               a cross-origin frame cannot be styled from this page.
+               Everything around it is ours: the card, the heading, the intro,
+               the frame chrome and the loading state.
+               The src is set from OT_CONFIG.prefCentreUrl the first time this
+               tab is opened, so the login frame isn't loaded on every visit.
+               ================================================================== -->
+          <div class="ot-frame" id="otPrefFrameWrap">
+            <div class="ot-frame-loading">Loading your preference centre…</div>
+            <iframe id="otPrefFrame" title="Jotun privacy and preference centre"
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
           </div>
         </div>
       </section>
 
-      <!-- ---------- Favourites ---------- -->
+      <!-- ---------- Communication preferences (in-page version) ----------
+           The same consent model rendered natively in the Jotun page, shown
+           alongside the hosted OneTrust centre so both options can be
+           demonstrated side by side. -->
+      <section class="panel" id="panel-comms">
+        <div class="card">
+          <h2>What you hear from us</h2>
+          <p class="lede">Choose the purposes you are happy for Jotun to contact you about. You can change or withdraw any of these at any time — your choices apply across every Jotun site, app and local office.</p>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Jotun Insider newsletter</span>
+              <p class="desc">Industry updates, technical insight and case studies from the sectors you select below.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" checked aria-label="Jotun Insider newsletter"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Product and coating updates</span>
+              <p class="desc">New products, reformulations, and changes to specifications or datasheets that affect the systems you use.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" checked aria-label="Product and coating updates"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Events, webinars and trade fairs</span>
+              <p class="desc">Invitations to Jotun technical sessions, customer days and the industry events we attend.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" aria-label="Events, webinars and trade fairs"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Offers from your local Jotun company</span>
+              <p class="desc">Pricing, campaigns and dealer promotions from the Jotun company operating in your country.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" aria-label="Offers from your local Jotun company"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+
+          <div class="purpose">
+            <div class="txt">
+              <span class="name">Research and product feedback</span>
+              <p class="desc">Occasional surveys and interview requests that help us improve our coatings and services.</p>
+            </div>
+            <span class="toggle"><input type="checkbox" aria-label="Research and product feedback"><span class="track"></span><span class="thumb"></span></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>How we reach you</h2>
+          <p class="lede">Pick a channel for each purpose. Leaving a channel unticked stops that type of message on that channel only.</p>
+          <div class="matrix-scroll">
+            <table class="matrix">
+              <thead><tr><th scope="col">Purpose</th><th scope="col">E-mail</th><th scope="col">Phone</th><th scope="col">SMS</th><th scope="col">Post</th><th scope="col">In person</th></tr></thead>
+              <tbody>
+                <tr><td>Jotun Insider newsletter</td>
+                  <td><input type="checkbox" checked aria-label="Newsletter by e-mail"></td><td><input type="checkbox" aria-label="Newsletter by phone"></td>
+                  <td><input type="checkbox" aria-label="Newsletter by SMS"></td><td><input type="checkbox" aria-label="Newsletter by post"></td><td><input type="checkbox" aria-label="Newsletter in person"></td></tr>
+                <tr><td>Product and coating updates</td>
+                  <td><input type="checkbox" checked aria-label="Product updates by e-mail"></td><td><input type="checkbox" checked aria-label="Product updates by phone"></td>
+                  <td><input type="checkbox" aria-label="Product updates by SMS"></td><td><input type="checkbox" aria-label="Product updates by post"></td><td><input type="checkbox" checked aria-label="Product updates in person"></td></tr>
+                <tr><td>Events, webinars and trade fairs</td>
+                  <td><input type="checkbox" aria-label="Events by e-mail"></td><td><input type="checkbox" aria-label="Events by phone"></td>
+                  <td><input type="checkbox" aria-label="Events by SMS"></td><td><input type="checkbox" aria-label="Events by post"></td><td><input type="checkbox" aria-label="Events in person"></td></tr>
+                <tr><td>Offers from your local Jotun company</td>
+                  <td><input type="checkbox" aria-label="Offers by e-mail"></td><td><input type="checkbox" aria-label="Offers by phone"></td>
+                  <td><input type="checkbox" aria-label="Offers by SMS"></td><td><input type="checkbox" aria-label="Offers by post"></td><td><input type="checkbox" aria-label="Offers in person"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Topics you care about</h2>
+          <p class="lede">We use these to decide what goes into your Jotun Insider edition.</p>
+          <div class="chips" id="topicChips">
+            <button class="chip" aria-pressed="true">Shipping and hull performance</button>
+            <button class="chip" aria-pressed="true">Energy and offshore</button>
+            <button class="chip" aria-pressed="false">Architecture and design</button>
+            <button class="chip" aria-pressed="false">Infrastructure</button>
+            <button class="chip" aria-pressed="false">Light industry and powder</button>
+            <button class="chip" aria-pressed="false">Decorative and colour trends</button>
+            <button class="chip" aria-pressed="true">Sustainability and regulation</button>
+          </div>
+
+          <h3 style="margin:2.2rem 0 .9rem">How often</h3>
+          <div class="radio-row">
+            <label><input type="radio" name="freq"> Weekly</label>
+            <label><input type="radio" name="freq" checked> Monthly</label>
+            <label><input type="radio" name="freq"> Quarterly</label>
+            <label><input type="radio" name="freq"> Only important updates</label>
+          </div>
+
+          <h3 style="margin:2.2rem 0 .9rem">Preferred language</h3>
+          <div class="radio-row">
+            <label><input type="radio" name="lang" checked> English</label>
+            <label><input type="radio" name="lang"> Norsk</label>
+            <label><input type="radio" name="lang"> Deutsch</label>
+            <label><input type="radio" name="lang"> Nederlands</label>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" onclick="showToast('Preferences saved across all Jotun channels')">Save preferences</button>
+            <button class="danger" onclick="withdrawAll()">Withdraw all consent</button>
+          </div>
+        </div>
+      </section>
+
       <section class="panel" id="panel-favourites">
         <div class="card">
           <h2>Favourites</h2>
@@ -895,6 +918,9 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 <!-- DEMO CMP BANNER. Hides itself automatically if the real OneTrust banner loads. -->
 <div class="overlay" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="ckTitle">
   <div class="modal">
+    <button class="modal-close" onclick="dismissCookie()" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
     <div class="np-rule"></div>
     <div class="pad">
       <span class="logo">
@@ -949,7 +975,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 <!-- ======================= NEWSLETTER POP-UP ======================= -->
 <div class="overlay" id="newsletterModal" role="dialog" aria-modal="true" aria-labelledby="nlTitle">
   <div class="modal">
-    <button class="modal-close" onclick="closeNewsletter()" aria-label="Close">
+    <button class="modal-close on-image" onclick="closeNewsletter()" aria-label="Close">
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
     <div class="np-shot">
@@ -985,13 +1011,6 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Demo control strip — delete before hand-off if you want a clean build. -->
-<div class="demobar">
-  <strong>DEMO</strong>
-  <button onclick="openCookie(true)">Cookie banner</button>
-  <button onclick="openNewsletter()">Sign-up pop-up</button>
-</div>
-
 <script>
 (function(){
   "use strict";
@@ -1019,9 +1038,25 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
 
   /* ---------------- Account tabs ---------------- */
   var navBtns = document.querySelectorAll('.acct-nav button');
+
+  /* The hosted preference centre is a login frame, so it's only fetched the
+     first time someone actually opens that tab. */
+  function loadPrefCentre(){
+    var f = document.getElementById('otPrefFrame');
+    if (!f || f.src) return;
+    var url = (window.OT_CONFIG || {}).prefCentreUrl;
+    if (!url) return;
+    f.addEventListener('load', function(){
+      var wrap = document.getElementById('otPrefFrameWrap');
+      if (wrap) wrap.classList.add('loaded');
+    });
+    f.src = url;
+  }
+
   function setPanel(id){
     navBtns.forEach(function(b){ b.setAttribute('aria-current', b.getAttribute('data-panel') === id ? 'true' : 'false'); });
     document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active', p.id === 'panel-' + id); });
+    if (id === 'prefs') loadPrefCentre();
   }
   navBtns.forEach(function(b){ b.addEventListener('click', function(){ setPanel(b.getAttribute('data-panel')); }); });
   document.querySelectorAll('[data-goto]').forEach(function(b){
@@ -1043,7 +1078,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
   };
 
   window.withdrawAll = function(){
-    document.querySelectorAll('#demoPrefs input[type=checkbox]').forEach(function(i){ i.checked = false; });
+    document.querySelectorAll('#panel-comms input[type=checkbox]').forEach(function(i){ i.checked = false; });
     showToast('All consent withdrawn — recorded with a timestamp');
   };
 
@@ -1063,6 +1098,12 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
     d.classList.toggle('show');
     document.getElementById('ckManage').textContent = d.classList.contains('show') ? 'Hide settings' : 'Manage settings';
   };
+  /* Close without making a choice. Nothing is recorded — the banner will come
+     back on the next visit, which is the correct behaviour for a demo. */
+  window.dismissCookie = function(){
+    cookieModal.classList.remove('show');
+    setTimeout(openNewsletter, 1600);
+  };
   window.closeCookie = function(choice){
     cookieModal.classList.remove('show');
     showToast(choice === 'accept' ? 'All cookies accepted' :
@@ -1080,8 +1121,7 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
   };
   window.closeNewsletter = function(){ nlModal.classList.remove('show'); };
 
-  nlModal.addEventListener('click', function(e){ if (e.target === nlModal) closeNewsletter(); });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && nlIsOpen()) closeNewsletter(); });
+  // Deliberately no backdrop-click or Escape handler — see note above.
 
   /* ==========================================================================
      ONETRUST EMBEDDED WEB FORM INSTALL
@@ -1089,80 +1129,109 @@ footer.site{background:#fff;border-top:1px solid var(--line);padding:3.4rem 0 2r
      This is the fix for the "form never renders" problem: the SDK will not
      render into a container that is hidden or not laid out.
      ========================================================================== */
-  var otPoller = null, otLastCall = 0;
+  var otState = {};
 
   function otReady(){ return window.OneTrust && window.OneTrust.webform && window.OneTrust.webform.InstallCP; }
-  function otRendered(){ var c = document.getElementById('ot-container'); return !!(c && c.children.length); }
+  function otRendered(id){ var c = document.getElementById(id); return !!(c && c.children.length); }
 
-  function startWebformInstall(){
+  /* Installs the collection point into `targetId` as soon as the SDK is ready
+     AND the container is genuinely visible/laid out — the SDK silently skips
+     hidden containers, which is what broke the E.ON and Philips builds.
+     `canInstall` decides visibility for that particular container. */
+  function installWebform(targetId, canInstall, onFail){
     var cp = CFG.webformCpId;
     if (!cp) return;
-    if (otPoller || otRendered()) return;
-    var attempts = 0;
-    otPoller = setInterval(function(){
-      attempts++;
-      if (otRendered()){
-        clearInterval(otPoller); otPoller = null;
+    var st = otState[targetId] = otState[targetId] || { poller: null, done: false, tries: 0 };
+    if (st.poller || st.done || otRendered(targetId)) return;
+    st.tries = 0;
+    st.poller = setInterval(function(){
+      st.tries++;
+      if (otRendered(targetId)){
+        clearInterval(st.poller); st.poller = null; st.done = true;   // install exactly once
         return;
       }
-      if (nlIsOpen() && otReady()){
-        var now = Date.now();
-        if (now - otLastCall >= 1500){
-          otLastCall = now;
-          try { OneTrust.webform.InstallCP(cp, { target: "#ot-container" }); }
-          catch(err){ console.warn('OneTrust InstallCP failed:', err); }
+      if (canInstall() && otReady()){
+        clearInterval(st.poller); st.poller = null;
+        st.done = true;
+        // Documented signature: InstallCP(collectionPointId, optionalCallback).
+        // There is no "target" option — where the form renders is set in
+        // OneTrust. Passing an options object here was incorrect.
+        try {
+          OneTrust.webform.InstallCP(cp, function(result){
+            console.log('OneTrust InstallCP callback:', result);
+          });
         }
+        catch(err){ console.warn('OneTrust InstallCP failed for #' + targetId + ':', err); }
+        // give it a moment, and only report a problem if nothing appeared
+        setTimeout(function(){
+          if (!otRendered(targetId)){
+            console.warn('OneTrust web form did not render into #' + targetId +
+                         ' — check the collection point is published and this domain is authorised.');
+            if (onFail) onFail();
+          }
+        }, 6000);
+        return;
       }
-      if (attempts > 60){
-        clearInterval(otPoller); otPoller = null;
-        if (!otRendered()){
-          console.warn('OneTrust web form did not render — check the collection point is published and this domain is authorised.');
-          var fb = document.getElementById('otFallback'); if (fb) fb.style.display = 'block';
-        }
+      if (st.tries > 60){
+        clearInterval(st.poller); st.poller = null;
+        console.warn('OneTrust SDK never became ready for #' + targetId);
+        if (onFail) onFail();
       }
     }, 300);
+  }
+
+  /* 1) Pop-up copy — installed when the pop-up opens. */
+  function startWebformInstall(){
+    installWebform('ot-container', nlIsOpen, function(){
+      var fb = document.getElementById('otFallback'); if (fb) fb.style.display = 'block';
+    });
   }
 
   window.addEventListener('OnetrustFormLoaded', function(e){
     console.log('OnetrustFormLoaded', e.detail);
     var fb = document.getElementById('otFallback'); if (fb) fb.style.display = 'none';
   });
-  window.addEventListener('OneTrustWebFormSubmitted', function(){
+  window.addEventListener('OneTrustWebFormSubmitted', function(e){
+    // The payload OneTrust actually sends. Check purposes[].CustomPreferences
+    // to confirm the granular selections left the browser.
+    console.log('OneTrustWebFormSubmitted payload:', JSON.stringify(e.detail, null, 2));
     showToast('Subscribed — your consent has been recorded');
-    setTimeout(closeNewsletter, 600);
+    if (nlIsOpen()) setTimeout(closeNewsletter, 600);
   });
 
+  /* The pop-up closes ONLY via the X in the corner or a real form submit.
+     No backdrop click, no Escape — clicking around inside the form (dropdowns,
+     labels, the panel) must never dismiss it. */
+
   /* Fallback close-on-submit: some form versions don't fire the event, so also
-     watch for a click on the form's own submit control. */
+     watch for a click on the form's OWN submit control. Anything we injected
+     (the dropdown toggles and their panels) is explicitly excluded. */
   (function(){
-    var c = document.getElementById('ot-container');
-    if (!c) return;
-    c.addEventListener('click', function(e){
-      if (e.target.closest('button, input[type="submit"], input[type="button"], [type="submit"]')){
+    ['ot-container'].forEach(function(id){
+      var c = document.getElementById(id);
+      if (!c) return;
+      c.addEventListener('click', function(e){
+        var el = e.target.closest('button, input[type="submit"], input[type="button"], [type="submit"]');
+        if (!el) return;
+        if (el.classList.contains('ot-dd-btn') || el.closest('.ot-dd')) return;  // our dropdown UI
         setTimeout(function(){
           showToast('Subscribed — your consent has been recorded');
-          closeNewsletter();
+          if (nlIsOpen()) closeNewsletter();
         }, 900);
-      }
+      });
     });
   })();
 
-  /* Optional: hosted preference centre on the account page. */
-  (function(){
-    var cp = CFG.prefCenterCpId; if (!cp) return;
-    var tries = 0;
-    var t = setInterval(function(){
-      tries++;
-      if (otReady()){
-        clearInterval(t);
-        try {
-          OneTrust.webform.InstallCP(cp, { target: "#ot-pref-center" });
-          var d = document.getElementById('demoPrefs'); if (d) d.style.display = 'none';
-        } catch(err){ console.warn('OneTrust preference centre install failed:', err); }
-      }
-      if (tries > 60) clearInterval(t);
-    }, 300);
-  })();
+  /* ==========================================================================
+     NOTE: no styling or scripting of the OneTrust form.
+     The web form is left exactly as OneTrust renders it. No CSS is injected
+     into #ot-container and no script of this page reads, moves or modifies
+     any of its controls, so nothing here can affect what it collects or
+     submits. Style the form in OneTrust's own branding settings instead.
+     ========================================================================== */
+
+  /* The preference centre is an iframe now (see loadPrefCentre above), so it
+     needs no InstallCP call. */
 
   /* ---------------- Page load sequence ---------------- */
   window.addEventListener('load', function(){
